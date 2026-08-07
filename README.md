@@ -3,7 +3,15 @@
 Tarayıcıda çalışan, bağımlılıksız tek dosyalık Rube Goldberg / bilye yolu
 kurma oyunu. Hazır fizik motoru yok — her şey `index.html` içinde.
 
-## Çalıştırma
+## Oyna
+
+**https://akcasakiz.github.io/rube-goldberg/** — kurulum yok, tarayıcıda açılır.
+`main` dalına her itişte kendiliğinden güncellenir.
+
+Paylaşma linkleri de bu adres üzerinden çalışır: makinenin tamamı URL'nin
+`#m=...` kısmında taşınıyor, sunucuya hiçbir şey yazılmıyor.
+
+## Çalıştırma (yerelde)
 
 Çift tıkla yeter (`file://` ile de çalışır). Yerel sunucu istersen:
 
