@@ -1,0 +1,5 @@
+# Kayit modunun cikardigi videolar tarayicinin indirme klasorune duser,
+# repoya girmez. Buraya elle kopyalanan ornekler olursa diye:
+*.webm
+*.mp4
+.DS_Store
