@@ -168,15 +168,15 @@
   .sayac{font-size:12px;color:var(--dim);margin-left:4px}
 
   /* Nota menusu */
-  #notaMenu{position:fixed;display:none;z-index:50;min-width:238px;padding:10px;
+  #notaMenu{position:fixed;display:none;z-index:50;min-width:322px;padding:10px;
             background:linear-gradient(180deg,#20242f,#171a23);border:1px solid #39415a;
             border-radius:14px;box-shadow:0 18px 40px #000a}
   .notaBas{font-size:12px;color:var(--dim);margin:0 2px 8px}
-  /* Bes sutun: pentatonik dizide oktav basina tam bes nota var, yani her
-     SATIR bir oktav oluyor. Dortlu izgarada oktavlar satirlara boluniyordu
-     ve ayni harf ust uste gelmedigi icin liste okunmuyordu. */
-  .notaIzgara{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
-  .notaIzgara button{justify-content:center;padding:7px 0;font-size:13px}
+  /* Yedi sutun: diyatonik dizide oktav basina tam yedi nota var, yani her
+     SATIR bir oktav oluyor ve ayni harf hep ayni sutunda kaliyor. Sutun
+     sayisi dizinin uzunluguna bagli - degistirilirse burasi da degisir. */
+  .notaIzgara{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+  .notaIzgara button{justify-content:center;padding:7px 0;font-size:12px}
   /* Orta bandin disindaki oktavlar biraz soluk: menude once C4-A5 arasi
      goze carpsin, bas/tiz uclar arayanin bulacagi yerde dursun. */
   .notaIzgara button.uzakOktav{opacity:.62}
@@ -1251,34 +1251,47 @@ function dilBarCiz() {
  *  degistirilir ve parcayla birlikte kaydedilir.
  * ================================================================== */
 
-/* Dizi C major PENTATONIK (C D E G A) - yarim ses araligi yok.
+/* Dizi C major DIYATONIK: C D E F G A B, dort oktav (C3-B6), 28 nota.
  *
- * NEDEN PENTATONIK, NEDEN TAM DIZI DEGIL: makinede topun parcalara hangi
- * SIRAYLA carpacagini oyuncu tam denetleyemez. Pentatonikte hangi iki nota
- * yan yana gelirse gelsin uyumlu duyuluyor - F ve B eklenseydi aralarindaki
- * triton ve yarim ses araliklari, oyuncunun kurmadigi bir sirada calinca
- * makineyi "bozuk" gosterirdi. Yani kisitlama eksiklik degil, tasarim.
+ * ONCE PENTATONIKTI (C D E G A), F ve B yoktu. Gerekcesi suydu: makinede
+ * topun parcalara hangi SIRAYLA carpacagini oyuncu tam denetleyemez ve
+ * pentatonikte hangi iki nota yan yana gelirse gelsin uyumlu duyulur.
+ * F ve B eklenince aralarindaki triton (F-B) ve yarim ses araliklari
+ * (E-F, B-C) da mumkun hale geliyor - yani makine artik "yanlis" da
+ * calabilir.
  *
- * Aralik DORT OKTAV (C3-A6): asagi ucta bas notalar makineye agirlik
- * veriyor, yukari ucta tiz notalar zil sesinden ayrisiyor. Her oktav tam
- * bes nota, yani nota menusundeki her satir bir oktav.
+ * KULLANICI KARARI (07-08-2026): yine de eklendi. Karsiliginda kazanilan
+ * sey kucuk degil - tam dizi olmadan cogu tanidik ezgi KURULAMIYORDU.
+ * sarki-yap.js verilen nota dizisini calan makineyi tasarliyor; F ya da B
+ * geciyorsa "Dizide olmayan nota" deyip cikiyordu. Artik cikmiyor.
+ *
+ * Kendiliginden nota atamasi (notaAta) dizide sirayla yurudugu icin arka
+ * arkaya konan parcalar duz bir majör gam cikariyor - ardisik gam adimlari
+ * kulaga zaten hos geliyor, yani varsayilan davranis bozulmuyor. Uyumsuzluk
+ * ancak oyuncu notalari ELLE uzak araliklara koyarsa ortaya cikar, ki o da
+ * artik onun tercihi.
+ *
  * Frekanslar esit tamperman, A4 = 440 Hz. */
 const NOTALAR = [
   { ad: "C3", f: 130.81 }, { ad: "D3", f: 146.83 }, { ad: "E3", f: 164.81 },
-  { ad: "G3", f: 196.00 }, { ad: "A3", f: 220.00 },
+  { ad: "F3", f: 174.61 }, { ad: "G3", f: 196.00 }, { ad: "A3", f: 220.00 },
+  { ad: "B3", f: 246.94 },
   { ad: "C4", f: 261.63 }, { ad: "D4", f: 293.66 }, { ad: "E4", f: 329.63 },
-  { ad: "G4", f: 392.00 }, { ad: "A4", f: 440.00 },
+  { ad: "F4", f: 349.23 }, { ad: "G4", f: 392.00 }, { ad: "A4", f: 440.00 },
+  { ad: "B4", f: 493.88 },
   { ad: "C5", f: 523.25 }, { ad: "D5", f: 587.33 }, { ad: "E5", f: 659.25 },
-  { ad: "G5", f: 783.99 }, { ad: "A5", f: 880.00 },
+  { ad: "F5", f: 698.46 }, { ad: "G5", f: 783.99 }, { ad: "A5", f: 880.00 },
+  { ad: "B5", f: 987.77 },
   { ad: "C6", f: 1046.50 }, { ad: "D6", f: 1174.66 }, { ad: "E6", f: 1318.51 },
-  { ad: "G6", f: 1567.98 }, { ad: "A6", f: 1760.00 },
+  { ad: "F6", f: 1396.91 }, { ad: "G6", f: 1567.98 }, { ad: "A6", f: 1760.00 },
+  { ad: "B6", f: 1975.53 },
 ];
 
 /* Yeni parcaya kendiliginden verilen notalarin cikarildigi pencere.
- * Dizinin TAMAMI kullanilmiyor: 20 nota sirayla dagitilsa arka arkaya
- * konan parcalar C3'ten A6'ya dort oktav suzuluyor ve ezgi degil suplu bir
- * kayma duyuluyor. Orta iki oktav (C4-A5) eskiden varsayilan olan bant. */
-const OTO_NOTA_ILK = 5, OTO_NOTA_SON = 15;   // NOTALAR[5..14] = C4..A5
+ * Dizinin TAMAMI kullanilmiyor: 28 nota sirayla dagitilsa arka arkaya
+ * konan parcalar C3'ten B6'ya dort oktav suzuluyor ve ezgi degil suplu bir
+ * kayma duyuluyor. Orta iki oktav (C4-B5) eskiden varsayilan olan bant. */
+const OTO_NOTA_ILK = 7, OTO_NOTA_SON = 21;   // NOTALAR[7..20] = C4..B5
 
 /* Ses iki ayri olaydan doguyor:
  *

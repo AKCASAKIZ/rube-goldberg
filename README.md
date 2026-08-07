@@ -41,6 +41,21 @@ otomatikti; ölçüldü: 360 px'lik bir rampada 4 derecelik yuvarlama ucu 25 px
 basılıyken açı 15 derecenin katına oturuyor — merdiven basamakları birebir
 tutuyor. **Alt** bütün yapışmayı kapatır.
 
+## Notalar
+
+Bilye bir parçaya çarptığında o parçanın notası çalıyor; makine kendi
+melodisini çalan bir enstrümana dönüşüyor. Nota, parçaya **sağ tıklayarak**
+değiştirilir ve parçayla birlikte kaydedilir.
+
+Dizi **C majör diyatonik** — C D E F G A B — dört oktav (C3–B6), 28 nota.
+Nota menüsünün her satırı bir oktav.
+
+> Başta pentatonikti (F ve B yoktu): topun parçalara hangi sırayla
+> çarpacağını denetleyemediğin için, hangi iki nota yan yana düşerse düşsün
+> uyumlu olsun isteniyordu. 7 Ağustos 2026'da tam diziye geçildi — karşılığı
+> şu: tam dizi olmadan tanıdık ezgilerin çoğu **kurulamıyordu**,
+> `sarki-yap.js` F ya da B görünce "dizide olmayan nota" deyip çıkıyordu.
+
 ## Parçalar
 
 | Parça | Ne yapar |

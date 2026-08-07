@@ -288,6 +288,20 @@ const bak = (ad, kosul, ek = "") => {
   g.secimYap([]);
   g.secili = "ramp";
 
+  /* ---------- nota dizisi ---------- */
+  bak("dizi dört tam oktav (28 nota)", g.NOTALAR.length === 28, g.NOTALAR.length);
+  for (const n of ["F3", "B3", "F4", "B4", "F5", "B5", "F6", "B6"])
+    bak(`${n} dizide var`, g.NOTALAR.some(x => x.ad === n));
+  // Her oktav aynı yedi harfle başlıyor: menü satırları oktav oluyor,
+  // aynı harf hep aynı sütunda kalıyor.
+  bak("her oktavda yedi nota var",
+    [0, 7, 14, 21].every(i => g.NOTALAR.slice(i, i + 7).map(x => x.ad[0]).join("") === "CDEFGAB"));
+  // Frekanslar oktav başına tam iki katına çıkmalı - yanlış tabloda bu bozulur
+  bak("oktav frekansı iki katı",
+    [0, 1, 2, 3, 4, 5, 6].every(i =>
+      Math.abs(g.NOTALAR[i + 7].f / g.NOTALAR[i].f - 2) < 0.005),
+    (g.NOTALAR[7].f / g.NOTALAR[0].f).toFixed(4));
+
   /* ---------- yerleştirme yardımı (yapışma) ---------- */
   g.secili = "tasi";
   g.parcalar = [];
