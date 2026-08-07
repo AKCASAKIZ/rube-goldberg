@@ -92,6 +92,9 @@ Object.defineProperties(globalThis, {
   sabitler:  { get: () => sabitler },
   tasima:    { get: () => tasima,    set: x => { tasima = x; } },
   secim:     { get: () => secim,     set: x => { secim = x; } },
+  secimler:  { get: () => secimler,  set: x => { secimler = x; } },
+  kutuSecim: { get: () => kutuSecim, set: x => { kutuSecim = x; } },
+  kaydirma:  { get: () => kaydirma,  set: x => { kaydirma = x; } },
   secili:    { get: () => secili,    set: x => { secili = x; } },
   calisiyor: { get: () => calisiyor, set: x => { calisiyor = x; } },
   bilye:     { get: () => bilye },
@@ -202,7 +205,7 @@ const bak = (ad, kosul, ek = "") => {
   g.parcalar = [];
   g.yeniParca(g.PARCALAR.launcher.olustur({ x: 500, y: 300 }));
   const f = g.parcalar[0];
-  g.secim = f;
+  g.secimYap([f]);
   g.tasimaBasla({ x: 534, y: 300 }, {});            // sağ uç tutamağı
   bak("uç tutamağı yakalandı", g.tasima && g.tasima.kavrama === "sekil2",
     g.tasima && g.tasima.kavrama);
@@ -212,7 +215,77 @@ const bak = (ad, kosul, ek = "") => {
   bak("tutamak uzattı", Math.abs(f.uzun - 60) < 0.5, f.uzun);
   g.tasimaSurdur({ x: 500, y: 100 });               // sınırın ötesine çek
   bak("uzunluk üst sınırda duruyor", f.uzun === g.PARCALAR.launcher.sekil.enCok, f.uzun);
-  g.tasima = null; g.secim = null;
+  g.tasima = null; g.secimYap([]);
+
+  /* ---------- kutu seçimi ve toplu taşıma ---------- */
+  g.secili = "tasi";
+  g.parcalar = [];
+  g.yeniParca(g.PARCALAR.domino.olustur({ x: 200, y: 500 }));
+  g.yeniParca(g.PARCALAR.domino.olustur({ x: 260, y: 500 }));
+  g.yeniParca(g.PARCALAR.domino.olustur({ x: 800, y: 500 }));   // kutunun dışında
+  const [d1, d2, d3] = g.parcalar;
+
+  bak("kutu yalnızca içine düşenleri seçiyor",
+    g.kutudakiParcalar({ x: 150, y: 400 }, { x: 320, y: 600 }).length === 2,
+    g.kutudakiParcalar({ x: 150, y: 400 }, { x: 320, y: 600 }).length);
+
+  // Uçları kutunun dışında ama gövdesi kutudan geçen rampa da seçilmeli
+  g.parcalar = [];
+  g.yeniParca(g.PARCALAR.ramp.olustur({ x: 100, y: 500 }, { x: 900, y: 500 }));
+  bak("kutuyu kesen uzun rampa seçiliyor",
+    g.kutudakiParcalar({ x: 480, y: 460 }, { x: 520, y: 540 }).length === 1);
+
+  // Boş alanda sürükleme kutu açıyor, bırakınca seçime dönüyor
+  g.parcalar = [];
+  g.yeniParca(g.PARCALAR.domino.olustur({ x: 200, y: 500 }));
+  g.yeniParca(g.PARCALAR.domino.olustur({ x: 260, y: 500 }));
+  g.secimYap([]);
+  g.tasimaBasla({ x: 150, y: 400 }, {});
+  bak("boş alanda sürükleme kutu açıyor", !!g.kutuSecim && !g.kaydirma);
+  g.birak({ clientX: 0, clientY: 0 });
+  bak("bırakınca seçim kutusu kapanıyor", g.kutuSecim === null);
+
+  // Shift ile aynı hareket görüşü kaydırıyor, kutu açmıyor
+  g.secimYap([]);
+  g.tasimaBasla({ x: 150, y: 400 }, { shiftKey: true });
+  bak("Shift görüşü kaydırıyor", !g.kutuSecim && !!g.kaydirma);
+  g.kaydirma = null;
+
+  // Toplu taşıma: iki domino birlikte kayıyor, aralarındaki mesafe korunuyor
+  const p1 = g.parcalar[0], p2 = g.parcalar[1];
+  g.secimYap([p1, p2]);
+  const oncekiFark = p2.p.x - p1.p.x;
+  g.tasimaBasla({ x: 200, y: 500 }, {});
+  bak("seçili yığına basınca toplu taşıma başlıyor",
+    !!(g.tasima && g.tasima.coklu), g.tasima && g.tasima.kavrama);
+  g.tasimaSurdur({ x: 300, y: 520 });
+  bak("iki parça da kaydı", Math.abs(p1.p.x - 300) < 0.01 && Math.abs(p2.p.y - 520) < 0.01,
+    `${p1.p.x},${p2.p.y}`);
+  bak("aralarındaki mesafe korundu", Math.abs((p2.p.x - p1.p.x) - oncekiFark) < 0.01,
+    p2.p.x - p1.p.x);
+
+  // Kenara dayanınca yığın hep birlikte duruyor, biri diğerinin üstüne binmiyor
+  g.tasimaSurdur({ x: 5000, y: 520 });
+  bak("tahta kenarında yığın bozulmuyor",
+    Math.abs((p2.p.x - p1.p.x) - oncekiFark) < 0.01, p2.p.x - p1.p.x);
+  bak("yığın tahtanın içinde kaldı", p2.p.x <= 996 && p1.p.x >= 4,
+    `${p1.p.x.toFixed(0)}..${p2.p.x.toFixed(0)}`);
+  g.tasima = null;
+
+  // Ctrl ile seçime ekleme / çıkarma
+  g.secimYap([]);
+  g.tasimaBasla({ x: p1.p.x, y: p1.p.y }, { ctrlKey: true });
+  bak("Ctrl seçime ekliyor", g.secimler.length === 1 && !g.tasima, g.secimler.length);
+  g.tasimaBasla({ x: p1.p.x, y: p1.p.y }, { ctrlKey: true });
+  bak("Ctrl ikinci kez seçimden çıkarıyor", g.secimler.length === 0, g.secimler.length);
+
+  // Tek seçimde tutamak var, çok seçimde yok
+  g.secimYap([p1, p2]);
+  bak("çoklu seçimde tutamak gösterilmiyor", g.secim === null);
+  g.secimYap([p1]);
+  bak("tek seçimde tutamak sahibi belli", g.secim === p1);
+  g.secimYap([]);
+  g.secili = "ramp";
 
   // Döndürülmüş fırlatıcı yana atıyor: yon=90° → yüzü +x'e bakar, topu
   // sağdan gelip çarpmalı (normalin ters yönünde yaklaşan top fırlar).

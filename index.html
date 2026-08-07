@@ -856,8 +856,11 @@ const SOZLUK = {
       notaBaslik: ad => `${ad} — note`,
       notaYok: "Right-click a piece to change its note.",
       tasi: "✋ Move",
-      tasiIpuc: "<b>Drag</b> a placed piece to move it, or click it for handles — drag those to rotate, lengthen or resize.",
+      tasiIpuc: "<b>Drag</b> a placed piece to move it, or click it for handles. <b>Drag a box</b> over empty space to select several at once — then drag any of them to move them together. Ctrl adds, Delete removes, Shift or the middle button pans.",
       tasiYok: "Nothing here to move — drag a piece you placed.",
+      kutuIpuc: "Drag a box to select several pieces. Ctrl adds to the selection, Shift or the middle button pans.",
+      cokluSecili: n => `${n} pieces selected — drag any of them to move them all, Delete removes them.`,
+      cokluTasi: n => `Moving ${n} pieces`,
       tasiSecili: ad => `${ad} selected — drag the white handles to rotate, lengthen or reshape it.`,
       bsParcalar: "Pieces", bsBolumler: "Levels", bsKontrol: "Controls",
       bsRenk: "Board colour",
@@ -940,8 +943,11 @@ const SOZLUK = {
       notaBaslik: ad => `${ad} — Note`,
       notaYok: "Rechtsklick auf ein Teil ändert seine Note.",
       tasi: "✋ Bewegen",
-      tasiIpuc: "Ein gesetztes Teil <b>ziehen</b> verschiebt es; anklicken zeigt Griffe — damit drehen, verlängern, umformen.",
+      tasiIpuc: "Ein gesetztes Teil <b>ziehen</b> verschiebt es; anklicken zeigt Griffe. <b>Rahmen ziehen</b> über leere Fläche wählt mehrere — dann eins davon ziehen bewegt alle. Strg erweitert, Entf löscht, Umschalt oder mittlere Taste verschiebt die Ansicht.",
       tasiYok: "Hier ist nichts zu verschieben — zieh ein gesetztes Teil.",
+      kutuIpuc: "Zieh einen Rahmen, um mehrere Teile zu wählen. Strg erweitert die Auswahl, Umschalt oder die mittlere Taste verschiebt die Ansicht.",
+      cokluSecili: n => `${n} Teile ausgewählt — zieh eins davon, um alle zu bewegen; Entf löscht sie.`,
+      cokluTasi: n => `${n} Teile werden bewegt`,
       tasiSecili: ad => `${ad} ausgewählt — zieh die weißen Griffe zum Drehen, Verlängern oder Umformen.`,
       bsParcalar: "Teile", bsBolumler: "Level", bsKontrol: "Steuerung",
       bsRenk: "Brettfarbe",
@@ -1023,8 +1029,11 @@ const SOZLUK = {
       notaBaslik: ad => `${ad} — note`,
       notaYok: "Clic droit sur une pièce pour changer sa note.",
       tasi: "✋ Déplacer",
-      tasiIpuc: "<b>Fais glisser</b> une pièce posée pour la déplacer, ou clique dessus pour afficher les poignées — tourner, allonger, remodeler.",
+      tasiIpuc: "<b>Fais glisser</b> une pièce posée pour la déplacer, ou clique dessus pour les poignées. <b>Trace un cadre</b> sur le vide pour en sélectionner plusieurs — puis fais glisser l'une d'elles pour toutes les déplacer. Ctrl ajoute, Suppr efface, Maj ou le bouton du milieu déplace la vue.",
       tasiYok: "Rien à déplacer ici — fais glisser une pièce que tu as posée.",
+      kutuIpuc: "Trace un cadre pour sélectionner plusieurs pièces. Ctrl ajoute à la sélection, Maj ou le bouton du milieu déplace la vue.",
+      cokluSecili: n => `${n} pièces sélectionnées — fais glisser l'une d'elles pour toutes les déplacer, Suppr les efface.`,
+      cokluTasi: n => `Déplacement de ${n} pièces`,
       tasiSecili: ad => `${ad} sélectionnée — tire les poignées blanches pour la tourner, l'allonger ou la remodeler.`,
       bsParcalar: "Pièces", bsBolumler: "Niveaux", bsKontrol: "Commandes",
       bsRenk: "Couleur du plateau",
@@ -1139,8 +1148,11 @@ const YEDEK_UI = {
   notaBaslik: ad => `${ad} — nota`,
   notaYok: "Notasını değiştirmek için bir parçaya sağ tıkla.",
   tasi: "✋ Taşı",
-  tasiIpuc: "Koyduğun parçayı <b>sürükleyerek</b> taşı; üstüne tıklayınca tutamaklar çıkar — döndür, uzat, şeklini değiştir.",
+  tasiIpuc: "Koyduğun parçayı <b>sürükleyerek</b> taşı; üstüne tıklayınca tutamaklar çıkar. Boş alanda <b>kutu çizerek</b> birden çok parça seç — sonra birini sürükle, hepsi birlikte gelir. Ctrl ekler, Delete siler, Shift ya da orta tuş görüşü kaydırır.",
   tasiYok: "Burada taşınacak bir şey yok — koyduğun bir parçayı sürükle.",
+  kutuIpuc: "Kutu çizerek birden çok parça seç. Ctrl seçime ekler, Shift ya da orta tuş görüşü kaydırır.",
+  cokluSecili: n => `${n} parça seçili — birini sürükle, hepsi birlikte gelir; Delete siler.`,
+  cokluTasi: n => `${n} parça taşınıyor`,
   tasiSecili: ad => `${ad} seçildi — beyaz tutamakları sürükleyerek döndür, uzat, şeklini değiştir.`,
   bsParcalar: "Parçalar", bsBolumler: "Bölümler", bsKontrol: "Kontroller",
   bsRenk: "Alan rengi",
@@ -2289,6 +2301,7 @@ function hareket(e) {
     gorusKis();
     return;
   }
+  if (kutuSecim) { kutuSecim.b = fareNok(e); return; }
   if (surukle) { surukle.b = fareNok(e); return; }
   if (tasima) tasimaSurdur(fareNok(e));
 }
@@ -2300,6 +2313,24 @@ cv.addEventListener("pointerup", e => {
 
 function birak(e) {
   if (kaydirma) { kaydirma = null; return; }
+  if (kutuSecim) {
+    kutuSecim.b = fareNok(e);
+    const bulunan = kutudakiParcalar(kutuSecim.a, kutuSecim.b);
+    // Cok kucuk dikdortgen = bos alana tiklama, surukleme degil: secimi
+    // temizlemis olur, yeni secim yapmaz.
+    const kucuk = boy(cikar(kutuSecim.b, kutuSecim.a)) < 6;
+    if (!kucuk) {
+      secimYap(kutuSecim.ekle
+        ? [...secimler, ...bulunan.filter(p => !seciliMi(p))]
+        : bulunan);
+      ipucGoster(secimler.length
+        ? T(secimler.length > 1 ? "cokluSecili" : "tasiSecili",
+            secimler.length > 1 ? secimler.length : pT(secimler[0].tur, "ad"))
+        : T("tasiYok"));
+    }
+    kutuSecim = null;
+    return;
+  }
   if (tasima) { tasima = null; kaydet(); return; }
   if (!surukle) return;
   // Bitis noktasi olaydan aliniyor: hizli surukleyiste tarayici arada hic
@@ -2311,7 +2342,7 @@ function birak(e) {
 cv.addEventListener("pointercancel", e => {
   dokunmalar.delete(e.pointerId);
   uzunBasmaIptal(); bekleyen = null; cimdik = null;
-  tasima = null; surukle = null; kaydirma = null;
+  tasima = null; surukle = null; kaydirma = null; kutuSecim = null;
 });
 
 /* ---------- dokunmatik ---------- *
@@ -2425,9 +2456,22 @@ function dokunBitir(e) {
  *  parca turu ayrica tasima kodu istemiyor.
  */
 
-let tasima = null;      // { p, kavrama, son: nokta }
-let kaydirma = null;    // { son: nokta } — bos alanda surukleyince gorus kayar
-let secim = null;       // tutamaklari gosterilen parca
+let tasima = null;      // { p, kavrama, son: nokta } | { coklu: true, son: nokta }
+let kaydirma = null;    // { son: nokta } — orta tus / Shift ile gorus kayar
+let secim = null;       // tutamaklari gosterilen parca — YALNIZCA tek secimde dolu
+let secimler = [];      // secili parcalarin tamami (0, 1 ya da cok)
+let kutuSecim = null;   // { a, b } — bos alanda surukleyince cizilen secim dikdortgeni
+
+/* Secim iki degiskende tutuluyor cunku iki ayri isi var: `secimler` NEYIN
+ * tasinacagini, `secim` TUTAMAKLARIN kimde gosterilecegini soyluyor.
+ * Tutamak yalnizca TEK parca seciliyken anlamli - iki rampanin ucunu ayni
+ * anda uzatmak diye bir sey yok, ve kalabalik secimde tutamaklar birbirine
+ * girip tasima tiklamasini yiyordu. Ikisini tek yerden kur. */
+function secimYap(liste) {
+  secimler = liste;
+  secim = liste.length === 1 ? liste[0] : null;
+}
+const seciliMi = p => secimler.includes(p);
 
 // Yakalama yaricaplari DUNYA biriminde; uzaklasinca ekranda kucuk kalmasin
 // diye olcege bolunuyorlar, yani parmak/imlec toleransi ekranda sabit.
@@ -2470,8 +2514,15 @@ function tutamakNoktalari(p) {
 }
 
 function tasimaBasla(nok, e) {
+  // Ctrl/Cmd: Windows'taki gibi secime EKLE / secimden CIKAR.
+  const ekle = !!(e && (e.ctrlKey || e.metaKey));
+  // Orta tus ya da Shift gorus kaydirir. Eskiden bos alanda SOL surukleme
+  // kaydiriyordu; o hareket artik secim dikdortgenine ait, kaydirma buraya
+  // tasindi. Kaydirma zaten yalnizca yakinlastirilmisken ise yariyor.
+  const kaydirTusu = !!(e && (e.button === 1 || e.shiftKey));
+
   // Once secili parcanin tutamaklari: uzerlerine denk gelen tiklama sekil degistirir.
-  if (secim && parcalar.includes(secim)) {
+  if (secim && parcalar.includes(secim) && !ekle) {
     for (const t of tutamakNoktalari(secim)) {
       if (boy(cikar(nok, t.nok)) < yakalamaPayi(UC_YAKIN)) {
         tasima = { p: secim, kavrama: t.ad, son: nok };
@@ -2480,18 +2531,60 @@ function tasimaBasla(nok, e) {
       }
     }
   }
+
   const i = parcaBul(nok);
-  if (i < 0) {                               // bos alan: parca degil, GORUS kayar
-    secim = null;
-    kaydirma = { son: nok };
+  if (i < 0) {                               // bos alan
+    if (kaydirTusu) {
+      kaydirma = { son: nok };
+      yakala(e);
+      ipucGoster(T(GORUS.olcek > 1 ? "kaydirIpuc" : "tasiYok"));
+      return;
+    }
+    // Ctrl basili degilse eski secim dusuyor - Windows'ta bos alana tiklamak
+    // secimi temizler; Ctrl ile eskisinin uzerine eklenir.
+    if (!ekle) secimYap([]);
+    kutuSecim = { a: nok, b: nok, ekle };
     yakala(e);
-    ipucGoster(T(GORUS.olcek > 1 ? "kaydirIpuc" : "tasiYok"));
+    ipucGoster(T("kutuIpuc"));
     return;
   }
-  secim = parcalar[i];
-  tasima = { p: secim, kavrama: "butun", son: nok };
-  ipucGoster(T("tasiSecili", pT(secim.tur, "ad")));
+
+  const p = parcalar[i];
+  if (ekle) {                                // secime kat / cikar, tasima baslatma
+    secimYap(seciliMi(p) ? secimler.filter(x => x !== p) : [...secimler, p]);
+    ipucGoster(T(secimler.length > 1 ? "cokluSecili" : "tasiSecili",
+                 secimler.length > 1 ? secimler.length : pT(p.tur, "ad")));
+    yakala(e);
+    return;
+  }
+  if (seciliMi(p) && secimler.length > 1) {  // secili yigini topluca tasi
+    tasima = { coklu: true, son: nok };
+    ipucGoster(T("cokluTasi", secimler.length));
+    yakala(e);
+    return;
+  }
+  secimYap([p]);
+  tasima = { p, kavrama: "butun", son: nok };
+  ipucGoster(T("tasiSecili", pT(p.tur, "ad")));
   yakala(e);
+}
+
+/** Dikdortgenle kesisen parcalar. Rampa gibi iki uclu parcalarda UC NOKTA
+ *  degil PARCA testi yapiliyor: uclari kutunun disinda kalan uzun bir rampa
+ *  kutunun ortasindan geciyorsa da secilmeli. */
+function kutudakiParcalar(a, b) {
+  const x1 = Math.min(a.x, b.x), x2 = Math.max(a.x, b.x);
+  const y1 = Math.min(a.y, b.y), y2 = Math.max(a.y, b.y);
+  const icinde = n => n.x >= x1 && n.x <= x2 && n.y >= y1 && n.y <= y2;
+  return parcalar.filter(p => {
+    const seg = geometri(p);
+    if (!seg) return icinde(p.p);
+    if (icinde(seg[0]) || icinde(seg[1])) return true;
+    // Iki ucu da disarida: dogru parcasi kutuyu kesiyor mu? Kutunun merkezine
+    // en yakin noktasi kutunun icindeyse kesiyordur.
+    const orta = v((x1 + x2) / 2, (y1 + y2) / 2);
+    return icinde(enYakin(orta, seg[0], seg[1]).nok);
+  });
 }
 
 function yakala(e) {
@@ -2499,6 +2592,25 @@ function yakala(e) {
 }
 
 function tasimaSurdur(nok) {
+  if (tasima.coklu) {                       // secili yigin birlikte kayiyor
+    const dx = nok.x - tasima.son.x, dy = nok.y - tasima.son.y;
+    tasima.son = nok;
+    // Kisitlama once TUM parcalar icin hesaplanip sonra uygulaniyor: parca
+    // parca kissaydi yigindaki biri tahta kenarina dayaninca digerleri
+    // kaymaya devam eder ve makinenin duzeni bozulurdu.
+    let sx = dx, sy = dy;
+    for (const q of secimler) {
+      for (const alan of noktalari(q)) {
+        sx = kis(sx, -q[alan].x + 4, W - 4 - q[alan].x);
+        sy = kis(sy, -q[alan].y + 4, H - 4 - q[alan].y);
+      }
+    }
+    for (const q of secimler) {
+      for (const alan of noktalari(q)) { q[alan].x += sx; q[alan].y += sy; }
+      if (tanim(q).sifirla) tanim(q).sifirla(q);
+    }
+    return;
+  }
   const p = tasima.p, k = tasima.kavrama;
   const s = tanim(p).sekil;
 
@@ -2532,25 +2644,42 @@ function tasimaSurdur(nok) {
   if (tanim(p).sifirla) tanim(p).sifirla(p);   // yeni sekil duruş hali olsun
 }
 
-/** Tasima modunda: secili parcanin cercevesi ve tutamaklari. */
+/** Tasima modunda: secili parcalarin cercevesi, tutamaklar ve secim kutusu. */
 function tutamaklar() {
   if (secili !== "tasi" || calisiyor || kayit) return;
-  if (secim && !parcalar.includes(secim)) secim = null;
+  // Silinen parcalar secimde asili kalmasin
+  if (secimler.some(p => !parcalar.includes(p)))
+    secimYap(secimler.filter(p => parcalar.includes(p)));
 
   for (const p of parcalar) {                  // secilmeyenlerde sadece tutus noktasi
-    if (p === secim) continue;
+    if (seciliMi(p)) continue;
     const m = p.p || v((p.a.x + p.b.x) / 2, (p.a.y + p.b.y) / 2);
     ctx.fillStyle = "#ffffff44";
     ctx.beginPath(); ctx.arc(m.x, m.y, 3.5, 0, 7); ctx.fill();
   }
-  if (!secim) return;
 
-  const seg = geometri(secim);
-  if (seg) {
-    ctx.strokeStyle = "#ffffff55"; ctx.lineWidth = 2; ctx.setLineDash([5, 5]);
-    cizgi(seg[0], seg[1]);
+  // Secili olan HER parca cerceveleniyor; tutamaklar yalnizca tek secimde.
+  for (const p of secimler) {
+    const sg = geometri(p);
+    ctx.strokeStyle = secimler.length > 1 ? "#ffd479aa" : "#ffffff55";
+    ctx.lineWidth = 2; ctx.setLineDash([5, 5]);
+    if (sg) cizgi(sg[0], sg[1]);
+    else { ctx.beginPath(); ctx.arc(p.p.x, p.p.y, uzunu(p) * 0.5 + 10, 0, 7); ctx.stroke(); }
     ctx.setLineDash([]);
   }
+
+  if (kutuSecim) {
+    const { a, b } = kutuSecim;
+    ctx.strokeStyle = "#ffd479"; ctx.fillStyle = "#ffd4791f";
+    ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.rect(Math.min(a.x, b.x), Math.min(a.y, b.y),
+             Math.abs(b.x - a.x), Math.abs(b.y - a.y));
+    ctx.fill(); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  if (!secim) return;
   for (const t of tutamakNoktalari(secim)) {
     ctx.fillStyle = t.tur === "olcu" ? "#f4a261" : "#ffffff";
     ctx.beginPath(); ctx.arc(t.nok.x, t.nok.y, 6, 0, 7); ctx.fill();
@@ -2615,7 +2744,7 @@ function cogalt(p) {
   const k = parcaKopyala(p, COGALT_KAYMA, COGALT_KAYMA);
   parcalar.push(k);
   kaydet();
-  secim = k;                                   // kopya hemen duzenlenebilsin
+  secimYap([k]);                               // kopya hemen duzenlenebilsin
   paletCiz();
   notaCal(k.nota, 0.5, TINI[k.tur] || TEL_VARSAYILAN);
   ipucGoster(T("cogaltIpuc", pT(k.tur, "ad")));
@@ -2918,7 +3047,7 @@ function paletCiz() {
     nok.style.color = PARCALAR[tur].renk;
     dugmeYaz(b, pT(tur, "ad") + (kalan === Infinity ? "" : ` (${kalan})`), null, nok);
     b.className = secili === tur ? "on" : "";
-    b.onclick = () => { secili = tur; secim = null; paletCiz(); ipucGoster(); };
+    b.onclick = () => { secili = tur; secimYap([]); paletCiz(); ipucGoster(); };
     bar.appendChild(b);
   }
   for (const [tur, metin] of [["tasi", T("tasi")], ["cogalt", T("cogalt")],
@@ -2926,7 +3055,7 @@ function paletCiz() {
     const b = document.createElement("button");
     dugmeYaz(b, metin);
     b.className = secili === tur ? "on" : "";
-    b.onclick = () => { secili = tur; secim = null; paletCiz(); ipucGoster(); };
+    b.onclick = () => { secili = tur; secimYap([]); paletCiz(); ipucGoster(); };
     bar.appendChild(b);
   }
   cv.style.cursor = secili === "tasi" ? "grab" : secili === "cogalt" ? "copy" : "crosshair";
@@ -3073,6 +3202,14 @@ document.addEventListener("keydown", e => {
   }
   if (e.key === " ") { e.preventDefault(); calisiyor ? durdur() : basla(); }
   if (e.key === "r" || e.key === "R") { durdur(); ustGizle(); }
+  // Delete/Backspace secili parcalari siler. Kutu secimi olmadan bunun
+  // karsiligi yoktu: 20 parcayi tek tek silme araciyla tiklamak gerekiyordu.
+  if ((e.key === "Delete" || e.key === "Backspace") && secimler.length) {
+    e.preventDefault();
+    parcalar = parcalar.filter(p => !seciliMi(p));
+    secimYap([]);
+    kaydet(); paletCiz();
+  }
 });
 
 try {
