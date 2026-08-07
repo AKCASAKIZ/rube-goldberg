@@ -856,7 +856,7 @@ const SOZLUK = {
       notaBaslik: ad => `${ad} — note`,
       notaYok: "Right-click a piece to change its note.",
       tasi: "✋ Move",
-      tasiIpuc: "<b>Drag</b> a placed piece to move it, or click it for handles. <b>Drag a box</b> over empty space to select several at once — then drag any of them to move them together. Ctrl adds, Delete removes, Shift or the middle button pans.",
+      tasiIpuc: "<b>Drag</b> a placed piece to move it, or click it for handles. <b>Drag a box</b> over empty space to select several at once — then drag any of them to move them together. Ctrl adds, Delete removes, arrow keys nudge, Q/E rotate the selection, Shift or the middle button pans. Ends snap to nearby pieces — hold Shift for 15 degree angles, Alt to switch snapping off.",
       tasiYok: "Nothing here to move — drag a piece you placed.",
       kutuIpuc: "Drag a box to select several pieces. Ctrl adds to the selection, Shift or the middle button pans.",
       cokluSecili: n => `${n} pieces selected — drag any of them to move them all, Delete removes them.`,
@@ -943,7 +943,7 @@ const SOZLUK = {
       notaBaslik: ad => `${ad} — Note`,
       notaYok: "Rechtsklick auf ein Teil ändert seine Note.",
       tasi: "✋ Bewegen",
-      tasiIpuc: "Ein gesetztes Teil <b>ziehen</b> verschiebt es; anklicken zeigt Griffe. <b>Rahmen ziehen</b> über leere Fläche wählt mehrere — dann eins davon ziehen bewegt alle. Strg erweitert, Entf löscht, Umschalt oder mittlere Taste verschiebt die Ansicht.",
+      tasiIpuc: "Ein gesetztes Teil <b>ziehen</b> verschiebt es; anklicken zeigt Griffe. <b>Rahmen ziehen</b> über leere Fläche wählt mehrere — dann eins davon ziehen bewegt alle. Strg erweitert, Entf löscht, Pfeiltasten schieben fein, Q/E drehen die Auswahl, Umschalt oder mittlere Taste verschiebt die Ansicht. Enden rasten an nahen Teilen ein — Umschalt für 15-Grad-Winkel, Alt schaltet das Einrasten ab.",
       tasiYok: "Hier ist nichts zu verschieben — zieh ein gesetztes Teil.",
       kutuIpuc: "Zieh einen Rahmen, um mehrere Teile zu wählen. Strg erweitert die Auswahl, Umschalt oder die mittlere Taste verschiebt die Ansicht.",
       cokluSecili: n => `${n} Teile ausgewählt — zieh eins davon, um alle zu bewegen; Entf löscht sie.`,
@@ -1029,7 +1029,7 @@ const SOZLUK = {
       notaBaslik: ad => `${ad} — note`,
       notaYok: "Clic droit sur une pièce pour changer sa note.",
       tasi: "✋ Déplacer",
-      tasiIpuc: "<b>Fais glisser</b> une pièce posée pour la déplacer, ou clique dessus pour les poignées. <b>Trace un cadre</b> sur le vide pour en sélectionner plusieurs — puis fais glisser l'une d'elles pour toutes les déplacer. Ctrl ajoute, Suppr efface, Maj ou le bouton du milieu déplace la vue.",
+      tasiIpuc: "<b>Fais glisser</b> une pièce posée pour la déplacer, ou clique dessus pour les poignées. <b>Trace un cadre</b> sur le vide pour en sélectionner plusieurs — puis fais glisser l'une d'elles pour toutes les déplacer. Ctrl ajoute, Suppr efface, les fleches ajustent, Q/E font pivoter la selection, Maj ou le bouton du milieu deplace la vue. Les extremites s'aimantent aux pieces proches — Maj pour des angles de 15 degres, Alt desactive l'aimantation.",
       tasiYok: "Rien à déplacer ici — fais glisser une pièce que tu as posée.",
       kutuIpuc: "Trace un cadre pour sélectionner plusieurs pièces. Ctrl ajoute à la sélection, Maj ou le bouton du milieu déplace la vue.",
       cokluSecili: n => `${n} pièces sélectionnées — fais glisser l'une d'elles pour toutes les déplacer, Suppr les efface.`,
@@ -1148,7 +1148,7 @@ const YEDEK_UI = {
   notaBaslik: ad => `${ad} — nota`,
   notaYok: "Notasını değiştirmek için bir parçaya sağ tıkla.",
   tasi: "✋ Taşı",
-  tasiIpuc: "Koyduğun parçayı <b>sürükleyerek</b> taşı; üstüne tıklayınca tutamaklar çıkar. Boş alanda <b>kutu çizerek</b> birden çok parça seç — sonra birini sürükle, hepsi birlikte gelir. Ctrl ekler, Delete siler, Shift ya da orta tuş görüşü kaydırır.",
+  tasiIpuc: "Koyduğun parçayı <b>sürükleyerek</b> taşı; üstüne tıklayınca tutamaklar çıkar. Boş alanda <b>kutu çizerek</b> birden çok parça seç — sonra birini sürükle, hepsi birlikte gelir. Ctrl ekler, Delete siler, ok tuşları ince ayar yapar, Q/E seçimi döndürür, Shift ya da orta tuş görüşü kaydırır. Uçlar yakındaki parçalara yapışır — Shift 15 derecelik açı verir, Alt yapışmayı kapatır.",
   tasiYok: "Burada taşınacak bir şey yok — koyduğun bir parçayı sürükle.",
   kutuIpuc: "Kutu çizerek birden çok parça seç. Ctrl seçime ekler, Shift ya da orta tuş görüşü kaydırır.",
   cokluSecili: n => `${n} parça seçili — birini sürükle, hepsi birlikte gelir; Delete siler.`,
@@ -1963,6 +1963,7 @@ function ciz() {
     ctx.strokeStyle = "#6ea8fe99"; ctx.lineWidth = 9;
     cizgi(surukle.a, surukle.b);
   }
+  yapisIzleri();
 
   if (bilye) {
     if (ucBoyut) {                       // yere dusen golge
@@ -2248,6 +2249,17 @@ requestAnimationFrame(function dongu(t) {
 
 let surukle = null;
 
+/** Cizilmekte olan rampanin serbest ucu: once baska parcalarin ucuna,
+ *  tutmazsa 15 derecenin katina yapisir. Basi (surukle.a) sabit kalir. */
+function surukleUcu(nok, e) {
+  yapisIzSil();
+  yapisTuslari(e);
+  const hedefler = yapisHedefleri([]);
+  const yapisik = yapistirNokta(nok, hedefler);
+  if (YAPIS.iz.nokta) return yapisik;
+  return yapistirAci(surukle.a, nok);
+}
+
 /** Fare olayindan DUNYA koordinati: once tuval pikseli, sonra gorus donusumu. */
 function fareNok(e) {
   const r = cv.getBoundingClientRect();
@@ -2302,8 +2314,8 @@ function hareket(e) {
     return;
   }
   if (kutuSecim) { kutuSecim.b = fareNok(e); return; }
-  if (surukle) { surukle.b = fareNok(e); return; }
-  if (tasima) tasimaSurdur(fareNok(e));
+  if (surukle) { surukle.b = surukleUcu(fareNok(e), e); return; }
+  if (tasima) { yapisTuslari(e); tasimaSurdur(fareNok(e)); }
 }
 
 cv.addEventListener("pointerup", e => {
@@ -2335,9 +2347,10 @@ function birak(e) {
   if (!surukle) return;
   // Bitis noktasi olaydan aliniyor: hizli surukleyiste tarayici arada hic
   // pointermove uretmeyebiliyor, o zaman parca yanlis boyda cikiyordu.
-  surukle.b = fareNok(e);
+  surukle.b = surukleUcu(fareNok(e), e);
   yeniParca(PARCALAR[secili].olustur(surukle.a, surukle.b));
   surukle = null;
+  yapisIzSil();
 }
 cv.addEventListener("pointercancel", e => {
   dokunmalar.delete(e.pointerId);
@@ -2455,6 +2468,109 @@ function dokunBitir(e) {
  *  yardimcilar parcanin sahip oldugu alanlari kaydiriyor; boylece yeni bir
  *  parca turu ayrica tasima kodu istemiyor.
  */
+
+/* ================================================================== *
+ *  YERLESTIRME YARDIMI (yapisma)
+ *
+ *  Elle konan parcalar hicbir zaman tam denk gelmiyordu: bir rampanin ucu
+ *  digerinin ucundan 3 px asagida kalinca top araya siziyor, "neden
+ *  calismiyor" sorusunun cevabi da gozle gorunmuyordu. Ayni sekilde duzgun
+ *  bir merdiven kurmak icin her basamagin acisini elle tutturmak gerekiyordu.
+ *
+ *  Uc tur yardim var, oncelik sirasiyla:
+ *    1. UC NOKTA  - surüklenen uc, baska bir parcanin ucuna/merkezine yakinsa
+ *                   tam ustune oturur. Zincir boylece gercekten birlesir.
+ *    2. ACI       - rampanin acisi 15 derecenin katina yakinsa ona yuvarlanir.
+ *    3. HIZALAMA  - baska bir parcayla ayni x ya da y'ye yakinsa o eksene
+ *                   oturur; ekranda kilavuz cizgisi cikar.
+ *
+ *  ALT BASILIYKEN HEPSI KAPALI. Kapatilamayan yapisma yardim degil engeldir:
+ *  oyuncu bilerek 2 px kaydirmak istedigde yolu acik olmali.
+ * ================================================================== */
+const YAPIS = {
+  nokta: 14,        // uc nokta yakalama yaricapi (dunya px)
+  hiza: 6,          // ayni eksene oturma toleransi
+  adim: 15 * Math.PI / 180, // aci yapismasinin basamagi
+  kapali: false,    // Alt basili -> hicbir yapisma yok
+  aciTusu: false,   // Shift basili -> aci 15 derecenin katina oturur
+  // Son yapismanin ekranda gosterilecek izleri; her karede cizim okur.
+  iz: { nokta: null, yatay: null, dikey: null, aci: null },
+};
+
+/** Yapisma hedefleri: verilen parcalar DISINDAKI her parcanin uclari ve merkezi. */
+function yapisHedefleri(disinda) {
+  const h = [];
+  for (const p of parcalar) {
+    if (disinda.includes(p)) continue;
+    const seg = geometri(p);
+    if (seg) { h.push(seg[0], seg[1]); }
+    if (p.p) h.push(p.p);
+    if (!seg && p.p && p.uzun != null) h.push(...ucNoktalar(p));
+  }
+  // Bolum geometrisi de hedef: duvarin ucuna dayanan rampa cok isteniyor.
+  for (const p of sabitler) {
+    const seg = geometri(p);
+    if (seg) h.push(seg[0], seg[1]);
+  }
+  return h;
+}
+
+/** nok'u en yakin hedefe yapistirir. Yapismadiysa nok'u aynen dondurur. */
+function yapistirNokta(nok, hedefler) {
+  if (YAPIS.kapali) return nok;
+  let enIyi = null, enKisa = YAPIS.nokta;
+  for (const h of hedefler) {
+    const d = boy(cikar(nok, h));
+    if (d < enKisa) { enKisa = d; enIyi = h; }
+  }
+  if (!enIyi) return nok;
+  YAPIS.iz.nokta = enIyi;
+  return v(enIyi.x, enIyi.y);
+}
+
+/** Tek eksende hizalama: x ya da y baska bir hedefe cok yakinsa ona otur. */
+function yapistirHiza(nok, hedefler) {
+  if (YAPIS.kapali) return nok;
+  let x = nok.x, y = nok.y;
+  let enX = YAPIS.hiza, enY = YAPIS.hiza;
+  for (const h of hedefler) {
+    if (Math.abs(h.x - nok.x) < enX) { enX = Math.abs(h.x - nok.x); x = h.x; YAPIS.iz.dikey = h.x; }
+    if (Math.abs(h.y - nok.y) < enY) { enY = Math.abs(h.y - nok.y); y = h.y; YAPIS.iz.yatay = h.y; }
+  }
+  return v(x, y);
+}
+
+/** Sabit ucu `kok` olan bir dogruda, serbest ucu 15 derecenin katina yuvarlar.
+ *
+ *  !! YALNIZCA SHIFT BASILIYKEN. Once toleransli ve kendiliginden calisiyordu
+ *  (4 derece); olculdu: 360 px'lik bir rampada 4 derece ucta 25 px demek, yani
+ *  oyuncunun koydugu yerden gorunur bicimde uzaga zipliyordu. Kucuk bir
+ *  yardim olmasi gerekirken parcayi elinden aliyordu. Uc noktaya ve eksene
+ *  yapisma kendiliginden kaliyor - onlarin kaydirmasi 14 px ile sinirli,
+ *  yani hicbir zaman surpriz olmuyor. Aci ise oyuncunun ISTEDIGI an devrede:
+ *  Shift basili tut, merdiven basamaklarinin acisi birebir tutar. */
+function yapistirAci(kok, uc) {
+  if (YAPIS.kapali || !YAPIS.aciTusu) return uc;
+  const d = cikar(uc, kok);
+  const uzunluk = boy(d);
+  if (uzunluk < 8) return uc;
+  const a = Math.atan2(d.y, d.x);
+  const yuvarlak = Math.round(a / YAPIS.adim) * YAPIS.adim;
+  YAPIS.iz.aci = yuvarlak;
+  return v(kok.x + Math.cos(yuvarlak) * uzunluk, kok.y + Math.sin(yuvarlak) * uzunluk);
+}
+
+/** Shift/Alt durumunu FARE olayindan okur. keydown'a guvenilemez: tuvalde
+ *  klavye odagi yokken tus olaylari belgeye hic ulasmayabiliyor, oysa her
+ *  pointermove olayi degistiricileri zaten tasiyor. */
+function yapisTuslari(e) {
+  if (!e) return;
+  if (typeof e.altKey === "boolean") YAPIS.kapali = e.altKey;
+  if (typeof e.shiftKey === "boolean") YAPIS.aciTusu = e.shiftKey;
+}
+
+/** Her yeni surukleme adiminda izler sifirlanir - eski kilavuz ekranda kalmasin. */
+function yapisIzSil() { YAPIS.iz = { nokta: null, yatay: null, dikey: null, aci: null }; }
 
 let tasima = null;      // { p, kavrama, son: nokta } | { coklu: true, son: nokta }
 let kaydirma = null;    // { son: nokta } — orta tus / Shift ile gorus kayar
@@ -2614,16 +2730,42 @@ function tasimaSurdur(nok) {
   const p = tasima.p, k = tasima.kavrama;
   const s = tanim(p).sekil;
 
-  if (k === "butun" || k === "a" || k === "b") {          // kaydirma
+  if (k === "a" || k === "b") {          // tek ucu oynatiyoruz - yapisma burada
+    yapisIzSil();
+    const hedefler = yapisHedefleri([p]);
+    // Once uc noktaya, tutmazsa acıya, o da tutmazsa hizaya bak. Sira onemli:
+    // uc noktaya oturmus bir zinciri aci yuvarlamasi tekrar acmamali.
+    const oburUc = k === "a" ? p.b : p.a;
+    let hedef = yapistirNokta(nok, hedefler);
+    if (!YAPIS.iz.nokta) {
+      hedef = yapistirAci(oburUc, hedef);
+      if (!YAPIS.iz.nokta) hedef = yapistirHiza(hedef, hedefler);
+    }
+    tasima.son = nok;
+    p[k].x = kis(hedef.x, 4, W - 4);
+    p[k].y = kis(hedef.y, 4, H - 4);
+  } else if (k === "butun") {                              // kaydirma
+    yapisIzSil();
     const dx = nok.x - tasima.son.x, dy = nok.y - tasima.son.y;
     tasima.son = nok;
-    const alanlar = k === "butun" ? noktalari(p) : [k];
+    const alanlar = noktalari(p);
     let sx = dx, sy = dy;                                  // tahtadan tasmasin
     for (const alan of alanlar) {
       sx = kis(sx, -p[alan].x + 4, W - 4 - p[alan].x);
       sy = kis(sy, -p[alan].y + 4, H - 4 - p[alan].y);
     }
     for (const alan of alanlar) { p[alan].x += sx; p[alan].y += sy; }
+    // Butun parca tasinirken UCLARI hedeflere hizala: yakalanan uc ne kadar
+    // kaydirilmasi gerekiyorsa parcanin TAMAMI o kadar kayiyor, yani parca
+    // donmuyor ya da uzamiyor - yalnizca yerine oturuyor.
+    const hedefler = yapisHedefleri([p]);
+    const seg = geometri(p) || [p.p];
+    let duzelt = null;
+    for (const u of seg) {
+      const y = yapistirNokta(u, hedefler);
+      if (YAPIS.iz.nokta) { duzelt = cikar(y, u); break; }
+    }
+    if (duzelt) for (const alan of alanlar) { p[alan].x += duzelt.x; p[alan].y += duzelt.y; }
   } else {                                                 // sekil tutamaklari
     tasima.son = nok;
     const d = cikar(nok, p.p);
@@ -2642,6 +2784,30 @@ function tasimaSurdur(nok) {
     }
   }
   if (tanim(p).sifirla) tanim(p).sifirla(p);   // yeni sekil duruş hali olsun
+}
+
+/** Yapisma izleri: hangi eksene ve hangi noktaya oturuldugu GORUNSUN.
+ *  Gorunmeyen yapisma en sinir bozucu ozelliktir - parca kendiliginden
+ *  kayiyormus gibi durur ve oyuncu neden oldugunu bilemez.
+ *  tutamaklar() icinde DEGIL, cunku o yalnizca "tasi" modunda calisiyor;
+ *  yapisma rampa cizerken de devrede. */
+function yapisIzleri() {
+  if (calisiyor || kayit) return;
+  if (YAPIS.iz.dikey != null) {
+    ctx.strokeStyle = "#5ddc8a99"; ctx.lineWidth = 1; ctx.setLineDash([3, 5]);
+    cizgi(v(YAPIS.iz.dikey, 0), v(YAPIS.iz.dikey, H));
+    ctx.setLineDash([]);
+  }
+  if (YAPIS.iz.yatay != null) {
+    ctx.strokeStyle = "#5ddc8a99"; ctx.lineWidth = 1; ctx.setLineDash([3, 5]);
+    cizgi(v(0, YAPIS.iz.yatay), v(W, YAPIS.iz.yatay));
+    ctx.setLineDash([]);
+  }
+  if (YAPIS.iz.nokta) {
+    const n = YAPIS.iz.nokta;
+    ctx.strokeStyle = "#5ddc8a"; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(n.x, n.y, 9, 0, 7); ctx.stroke();
+  }
 }
 
 /** Tasima modunda: secili parcalarin cercevesi, tutamaklar ve secim kutusu. */
@@ -3192,7 +3358,63 @@ document.getElementById("ustBtn").onclick = () => {
   if (gec) bolumKur(bolumNo + 1);
 };
 
+/** Secili parcalari (dx,dy) kadar kaydirir; yigin tahtanin icinde kalir. */
+function kaydirSecim(dx, dy) {
+  let sx = dx, sy = dy;
+  for (const q of secimler)
+    for (const alan of noktalari(q)) {
+      sx = kis(sx, -q[alan].x + 4, W - 4 - q[alan].x);
+      sy = kis(sy, -q[alan].y + 4, H - 4 - q[alan].y);
+    }
+  for (const q of secimler) {
+    for (const alan of noktalari(q)) { q[alan].x += sx; q[alan].y += sy; }
+    if (tanim(q).sifirla) tanim(q).sifirla(q);
+  }
+}
+
+/** Secimi ortak merkezi etrafinda `da` radyan dondurur.
+ *  Iki sey birlikte donmeli: parcanin KONUMU (merkez etrafinda) ve kendi
+ *  ACISI (p.yon). Yalnizca konum donseydi yatik bir rampa dizisi dizilim
+ *  olarak doner ama her parca yatay kalirdi. */
+function dondurSecim(da) {
+  if (!secimler.length) return;
+  let mx = 0, my = 0, n = 0;
+  for (const q of secimler)
+    for (const alan of noktalari(q)) { mx += q[alan].x; my += q[alan].y; n++; }
+  if (!n) return;
+  mx /= n; my /= n;
+  const co = Math.cos(da), si = Math.sin(da);
+  // Once denemesini yap: tahtadan tasan bir donus HIC uygulanmamali, yoksa
+  // parcalar kenara yapisip yigin sekil degistiriyor.
+  for (const q of secimler)
+    for (const alan of noktalari(q)) {
+      const x = q[alan].x - mx, y = q[alan].y - my;
+      const nx = mx + x * co - y * si, ny = my + x * si + y * co;
+      if (nx < 4 || nx > W - 4 || ny < 4 || ny > H - 4) return;
+    }
+  for (const q of secimler) {
+    for (const alan of noktalari(q)) {
+      const x = q[alan].x - mx, y = q[alan].y - my;
+      q[alan].x = mx + x * co - y * si;
+      q[alan].y = my + x * si + y * co;
+    }
+    // Tek noktayla konumlanan parcalarin yonu p.yon'da: konumu dondurmek
+    // yetmiyor, kendi ekseni de donmeli. Rampa gibi iki uclu parcalarda
+    // yon zaten uclardan cikiyor, ona dokunma.
+    // !! `q.yon != null` YETMEZ: domino/firlatici gibi parcalar varsayilan
+    //    olarak yon TASIMIYOR (yonu() 0 kabul ediyor), o yuzden hic donmuyorlardi.
+    if (q.p && !q.a) q.yon = yonu(q) + da;
+    if (tanim(q).sifirla) tanim(q).sifirla(q);
+  }
+}
+
+// Alt basiliyken yapisma kapali. Tusun kalkmasini da dinlemek sart, yoksa
+// oyuncu Alt'i birakti sanip yapismasiz surukleme yapmaya devam eder.
+document.addEventListener("keyup", e => { if (!e.altKey) YAPIS.kapali = false; });
+window.addEventListener("blur", () => { YAPIS.kapali = false; });
+
 document.addEventListener("keydown", e => {
+  YAPIS.kapali = e.altKey;
   // Kayit sirasinda tek gecerli tus Esc: kaydi BITIRIR ve goruntuyu saklar.
   // Digerleri kapali - bosluk/R kaydin ortasinda simulasyonu oynatirsa
   // cekilen goruntu ile motorun durumu ayrisiyor.
@@ -3202,6 +3424,25 @@ document.addEventListener("keydown", e => {
   }
   if (e.key === " ") { e.preventDefault(); calisiyor ? durdur() : basla(); }
   if (e.key === "r" || e.key === "R") { durdur(); ustGizle(); }
+
+  // Ok tuslari: secili parcalari ince ayarla. Fareyle 1 px tutturmak
+  // imkansiz, yapisma da bazen 1-2 px oteye oturuyor - kacis yolu bu.
+  const oklar = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+  if (oklar[e.key] && secimler.length) {
+    e.preventDefault();
+    const [ox, oy] = oklar[e.key];
+    const n = e.shiftKey ? 10 : 1;
+    kaydirSecim(ox * n, oy * n);
+    kaydet();
+  }
+  // Q/E: secimi kendi ortasi etrafinda dondurur. Tutamak tek parcayi
+  // donduruyordu; bir merdivenin tamamini egmek icin karsiligi yoktu.
+  if ((e.key === "q" || e.key === "Q" || e.key === "e" || e.key === "E") && secimler.length) {
+    e.preventDefault();
+    const yon = (e.key === "q" || e.key === "Q") ? -1 : 1;
+    dondurSecim(yon * (e.shiftKey ? 15 : 5) * Math.PI / 180);
+    kaydet();
+  }
   // Delete/Backspace secili parcalari siler. Kutu secimi olmadan bunun
   // karsiligi yoktu: 20 parcayi tek tek silme araciyla tiklamak gerekiyordu.
   if ((e.key === "Delete" || e.key === "Backspace") && secimler.length) {

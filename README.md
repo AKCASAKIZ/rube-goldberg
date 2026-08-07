@@ -10,6 +10,29 @@ kurma oyunu. Hazır fizik motoru yok — her şey `index.html` içinde.
     cd ~/projects/rube-goldberg && python3 -m http.server 8777
     # http://127.0.0.1:8777/index.html
 
+## Taşı modu — seçim, taşıma, yerleştirme yardımı
+
+| Hareket | Ne yapar |
+|---|---|
+| Boş alanda sürükle | Seçim dikdörtgeni |
+| Seçili yığından birini sürükle | Hepsi birlikte taşınır |
+| Ctrl + tıkla | Seçime ekler / çıkarır |
+| Ok tuşları | 1 px kaydırır (Shift ile 10 px) |
+| Q / E | Seçimi kendi ortası etrafında döndürür (Shift ile 15°) |
+| Delete | Seçilenleri siler |
+| Shift + sürükle · orta tuş | Görüşü kaydırır |
+
+**Yapışma.** Sürüklenen uç, başka bir parçanın ucuna ya da merkezine 14 px'den
+yakınsa tam üstüne oturur; zincir gerçekten birleşir. Aynı x ya da y'ye
+yakınsa o eksene hizalanır ve yeşil kılavuz çizgisi çıkar. Nereye yapıştığı
+her zaman ekranda görünür.
+
+**Açı yapışması Shift'e bağlı, kendiliğinden değil.** Önce toleranslı ve
+otomatikti; ölçüldü: 360 px'lik bir rampada 4 derecelik yuvarlama ucu 25 px
+öteye atıyor, yani yardım etmek yerine parçayı elinden alıyordu. Şimdi Shift
+basılıyken açı 15 derecenin katına oturuyor — merdiven basamakları birebir
+tutuyor. **Alt** bütün yapışmayı kapatır.
+
 ## Parçalar
 
 | Parça | Ne yapar |

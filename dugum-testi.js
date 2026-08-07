@@ -95,6 +95,7 @@ Object.defineProperties(globalThis, {
   secimler:  { get: () => secimler,  set: x => { secimler = x; } },
   kutuSecim: { get: () => kutuSecim, set: x => { kutuSecim = x; } },
   kaydirma:  { get: () => kaydirma,  set: x => { kaydirma = x; } },
+  YAPIS:     { get: () => YAPIS },
   secili:    { get: () => secili,    set: x => { secili = x; } },
   calisiyor: { get: () => calisiyor, set: x => { calisiyor = x; } },
   bilye:     { get: () => bilye },
@@ -284,6 +285,87 @@ const bak = (ad, kosul, ek = "") => {
   bak("çoklu seçimde tutamak gösterilmiyor", g.secim === null);
   g.secimYap([p1]);
   bak("tek seçimde tutamak sahibi belli", g.secim === p1);
+  g.secimYap([]);
+  g.secili = "ramp";
+
+  /* ---------- yerleştirme yardımı (yapışma) ---------- */
+  g.secili = "tasi";
+  g.parcalar = [];
+  g.yeniParca({ tur: "ramp", a: g.v(200, 400), b: g.v(400, 500) });
+  g.yeniParca({ tur: "ramp", a: g.v(600, 300), b: g.v(800, 380) });
+  const yapisA = g.parcalar[0], yapisB = g.parcalar[1];
+
+  // yapisB'nin a ucunu yapisA'nin b ucunun YAKININA sürükle: tam üstüne oturmalı
+  g.secimYap([yapisB]);
+  g.tasimaBasla({ x: 600, y: 300 }, {});
+  g.tasimaSurdur({ x: 406, y: 496 });               // 7 px uzakta
+  bak("uç noktaya yapışıyor",
+    Math.abs(yapisB.a.x - 400) < 0.01 && Math.abs(yapisB.a.y - 500) < 0.01,
+    `${yapisB.a.x.toFixed(1)},${yapisB.a.y.toFixed(1)}`);
+  bak("yapışma izi çiziliyor", !!g.YAPIS.iz.nokta);
+
+  // Alt basılıyken yapışma YOK
+  g.YAPIS.kapali = true;
+  g.tasimaSurdur({ x: 406, y: 496 });
+  bak("Alt yapışmayı kapatıyor",
+    Math.abs(yapisB.a.x - 406) < 0.01 && Math.abs(yapisB.a.y - 496) < 0.01,
+    `${yapisB.a.x.toFixed(1)},${yapisB.a.y.toFixed(1)}`);
+  g.YAPIS.kapali = false;
+  g.tasima = null;
+
+  // Uzaktaki nokta yapışmıyor - yapışma yarıçapı 14 px
+  g.secimYap([yapisB]);
+  g.tasimaBasla({ x: yapisB.a.x, y: yapisB.a.y }, {});
+  g.tasimaSurdur({ x: 340, y: 460 });               // yapisA'nin ucundan ~72 px
+  bak("uzaktaki nokta yapışmıyor", Math.abs(yapisB.a.x - 340) < 6, yapisB.a.x.toFixed(1));
+  g.tasima = null;
+
+  // Açı yapışması YALNIZCA Shift ile
+  g.secili = "ramp";
+  g.parcalar = [];
+  g.surukle = { a: g.v(100, 100), b: g.v(100, 100) };
+  let serbestUc = g.surukleUcu({ x: 400, y: 300 }, { shiftKey: false });
+  bak("Shift'siz açı serbest",
+    Math.abs(serbestUc.x - 400) < 0.01 && Math.abs(serbestUc.y - 300) < 0.01,
+    `${serbestUc.x.toFixed(1)},${serbestUc.y.toFixed(1)}`);
+  serbestUc = g.surukleUcu({ x: 400, y: 300 }, { shiftKey: true });
+  const aci = Math.atan2(serbestUc.y - 100, serbestUc.x - 100) * 180 / Math.PI;
+  bak("Shift açıyı 15°'nin katına oturtuyor", Math.abs(aci - 30) < 0.01, aci.toFixed(2) + "°");
+  g.surukle = null;
+  g.YAPIS.aciTusu = false;
+
+  /* ---------- ok tuşları ve döndürme ---------- */
+  g.secili = "tasi";
+  g.parcalar = [];
+  g.yeniParca(g.PARCALAR.domino.olustur({ x: 300, y: 400 }));
+  g.yeniParca(g.PARCALAR.domino.olustur({ x: 400, y: 400 }));
+  const [k1, k2] = g.parcalar;
+  g.secimYap([k1, k2]);
+
+  g.kaydirSecim(1, 0);
+  bak("ok tuşu 1 px kaydırıyor", Math.abs(k1.p.x - 301) < 0.01, k1.p.x);
+  g.kaydirSecim(10, 0);
+  bak("Shift+ok 10 px kaydırıyor", Math.abs(k1.p.x - 311) < 0.01, k1.p.x);
+
+  // 90° döndürünce yatay dizilim dikey oluyor, parçanın kendi açısı da dönüyor
+  const oncekiYon = k1.yon || 0;
+  g.dondurSecim(Math.PI / 2);
+  bak("döndürme dizilimi çeviriyor",
+    Math.abs(k1.p.x - k2.p.x) < 0.01 && Math.abs(k1.p.y - k2.p.y) > 90,
+    `dx=${(k2.p.x - k1.p.x).toFixed(1)} dy=${(k2.p.y - k1.p.y).toFixed(1)}`);
+  bak("parçanın kendi açısı da döndü",
+    Math.abs((k1.yon || 0) - (oncekiYon + Math.PI / 2)) < 0.01, k1.yon);
+
+  // Tahtadan taşacak döndürme HİÇ uygulanmıyor - yığın bozulmamalı
+  g.parcalar = [];
+  g.yeniParca(g.PARCALAR.domino.olustur({ x: 20, y: 320 }));
+  g.yeniParca(g.PARCALAR.domino.olustur({ x: 980, y: 320 }));
+  const [u1, u2] = g.parcalar;
+  g.secimYap([u1, u2]);
+  const aralik = u2.p.x - u1.p.x;
+  g.dondurSecim(Math.PI / 2);                        // dikeye dönerse tahta dışına çıkar
+  bak("taşacak döndürme uygulanmıyor",
+    Math.abs((u2.p.x - u1.p.x) - aralik) < 0.01, u2.p.x - u1.p.x);
   g.secimYap([]);
   g.secili = "ramp";
 
