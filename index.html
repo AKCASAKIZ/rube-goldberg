@@ -1251,7 +1251,8 @@ function dilBarCiz() {
  *  degistirilir ve parcayla birlikte kaydedilir.
  * ================================================================== */
 
-/* Dizi C major DIYATONIK: C D E F G A B, dort oktav (C3-B6), 28 nota.
+/* Dizi C major DIYATONIK: C D E F G A B, dort oktav (C3-C7), 29 nota.
+ * Ust uc gami kapatan ince do ile bitiyor (C7).
  *
  * ONCE PENTATONIKTI (C D E G A), F ve B yoktu. Gerekcesi suydu: makinede
  * topun parcalara hangi SIRAYLA carpacagini oyuncu tam denetleyemez ve
@@ -1285,6 +1286,11 @@ const NOTALAR = [
   { ad: "C6", f: 1046.50 }, { ad: "D6", f: 1174.66 }, { ad: "E6", f: 1318.51 },
   { ad: "F6", f: 1396.91 }, { ad: "G6", f: 1567.98 }, { ad: "A6", f: 1760.00 },
   { ad: "B6", f: 1975.53 },
+  // Gami kapatan ince do. Ara oktavlarda kapanis zaten var (B3'ten sonra C4
+  // geliyor) ama en ust oktav B6'da kesiliyordu: "do re mi fa sol la si"
+  // deyip son "do"yu soylememek gibi. Tek nota, ama dizinin ust ucunu
+  // tamamlayan nota.
+  { ad: "C7", f: 2093.00 },
 ];
 
 /* Yeni parcaya kendiliginden verilen notalarin cikarildigi pencere.

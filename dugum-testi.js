@@ -289,13 +289,24 @@ const bak = (ad, kosul, ek = "") => {
   g.secili = "ramp";
 
   /* ---------- nota dizisi ---------- */
-  bak("dizi dört tam oktav (28 nota)", g.NOTALAR.length === 28, g.NOTALAR.length);
+  bak("dizi dört tam oktav + kapanış (29 nota)", g.NOTALAR.length === 29, g.NOTALAR.length);
+  // Gam "do"da kapanmalı: hem başı hem sonu C olmalı (do…do)
+  bak("dizi do ile başlayıp do ile bitiyor",
+    g.NOTALAR[0].ad === "C3" && g.NOTALAR[g.NOTALAR.length - 1].ad === "C7",
+    g.NOTALAR[0].ad + "…" + g.NOTALAR[g.NOTALAR.length - 1].ad);
+  bak("kapanış do'su tam oktav üstte",
+    Math.abs(g.NOTALAR[g.NOTALAR.length - 1].f / g.NOTALAR[21].f - 2) < 0.005,
+    (g.NOTALAR[28].f / g.NOTALAR[21].f).toFixed(4));
   for (const n of ["F3", "B3", "F4", "B4", "F5", "B5", "F6", "B6"])
     bak(`${n} dizide var`, g.NOTALAR.some(x => x.ad === n));
   // Her oktav aynı yedi harfle başlıyor: menü satırları oktav oluyor,
   // aynı harf hep aynı sütunda kalıyor.
   bak("her oktavda yedi nota var",
     [0, 7, 14, 21].every(i => g.NOTALAR.slice(i, i + 7).map(x => x.ad[0]).join("") === "CDEFGAB"));
+  // Sekiz notalık gam gerçekten kurulabiliyor mu: do re mi fa sol la si do
+  bak("do…do sekiz notalık gam dizide var",
+    ["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"].every(n =>
+      g.NOTALAR.some(x => x.ad === n)));
   // Frekanslar oktav başına tam iki katına çıkmalı - yanlış tabloda bu bozulur
   bak("oktav frekansı iki katı",
     [0, 1, 2, 3, 4, 5, 6].every(i =>

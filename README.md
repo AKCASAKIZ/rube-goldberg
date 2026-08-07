@@ -47,8 +47,13 @@ Bilye bir parçaya çarptığında o parçanın notası çalıyor; makine kendi
 melodisini çalan bir enstrümana dönüşüyor. Nota, parçaya **sağ tıklayarak**
 değiştirilir ve parçayla birlikte kaydedilir.
 
-Dizi **C majör diyatonik** — C D E F G A B — dört oktav (C3–B6), 28 nota.
-Nota menüsünün her satırı bir oktav.
+Dizi **C majör diyatonik** — do re mi fa sol la si — dört oktav, **C3'ten
+C7'ye 29 nota**. Nota menüsünün her satırı bir oktav; en alttaki tek düğme
+(C7) gamı kapatan ince do.
+
+Ara oktavlarda kapanış zaten vardı (B3'ten sonra C4 gelir), ama üst uç
+B6'da kesiliyordu — "do re mi fa sol la si" deyip son "do"yu söylememek
+gibi. C7 onu tamamlıyor.
 
 > Başta pentatonikti (F ve B yoktu): topun parçalara hangi sırayla
 > çarpacağını denetleyemediğin için, hangi iki nota yan yana düşerse düşsün
