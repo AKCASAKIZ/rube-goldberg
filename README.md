@@ -28,6 +28,7 @@ Paylaşma linkleri de bu adres üzerinden çalışır: makinenin tamamı URL'nin
 | Ok tuşları | 1 px kaydırır (Shift ile 10 px) |
 | Q / E | Seçimi kendi ortası etrafında döndürür (Shift ile 15°) |
 | Delete | Seçilenleri siler |
+| Ctrl/Cmd + D · Ctrl + V | Seçili yığını olduğu gibi kopyalar |
 | Shift + sürükle · orta tuş | Görüşü kaydırır |
 
 **Yapışma.** Sürüklenen uç, başka bir parçanın ucuna ya da merkezine 14 px'den
@@ -75,12 +76,65 @@ gibi. C7 onu tamamlıyor.
 | Mıknatıs | 170 px menzilde topu kendine çeker |
 | Döner Tabla ↻ / ↺ | Kendi merkezinde döner; üstündeki topu döndüğü yöne taşır, ucunda savurur |
 
+## Kaydet / Aç — makine kütüphanesi
+
+**💾 Kaydet** ve **📂 Aç** aynı paneli açıyor: tahtadaki makineye ad verip
+saklıyorsun, sakladıklarını listeden geri çağırıyorsun (`rube-arsiv`, en fazla
+40 kayıt). Aynı adla kaydetmek üzerine yazar.
+
+Bölüm kaydından (`rube-bolum-<id>`) **ayrı** bir şey ve bilerek öyle: bölüm
+kaydı otomatiktir ve bölüm başına tektir — ne kurduysan o durur, üstüne
+kurunca eskisi gider. Kütüphane ise oyuncunun adıyla sakladığı, istediği
+zaman geri çağırdığı düzenler. İkisini birleştirmek "makinem nerede"
+sorusunu doğuruyordu.
+
+Kayıtta **bölüm id'si de** duruyor: makine hangi bölümde kurulduysa orada
+açılıyor, yoksa stoğu sınırlı bir bölüme 40 parçalık düzen düşerdi. Yükleme
+`makineSuz`'den geçiyor — paylaşma linkiyle **aynı** süzgeç; localStorage elle
+düzenlenebilir ve tek bir NaN fiziği kilitler.
+
+## Tahtayı boşaltmak: iki kapı
+
+🧹 tek tıklamayla her şeyi siliyordu ve diğer düğmelerin arasındaydı. Şimdi:
+
+- Düğme **kendi şeridinde, en altta** ve kırmızı (`.tehlike`).
+- İlk tıklama **soruyor** ("Boşaltayım mı? Tekrar tıkla"), 4 saniye içinde
+  ikinci tıklama onaylıyor. Modal kullanılmadı: parmakta ve kayıt sırasında
+  modal en kötü seçenek, üstelik oyunun hiçbir yerinde modal yok.
+- Silinen makine `sonSilinen`'de duruyor, **Ctrl+Z** geri getiriyor. Tek
+  adımlık: geri alınacak tek yıkıcı işlem bu.
+
 **⧉ Çoğalt** bir parçayı açısı, boyu ve notasıyla kopyalar: ya palet
 aracını seçip parçaya tıkla (kopya imlece yapışır, bırakınca yerleşir) ya da
 parçaya **sağ tıklayıp** nota menüsünün altındaki düğmeyi kullan. Bölümde
 stok bittiyse çoğaltmaz. Kopyalama parça türünü bilmez — `noktalari()` ile
 hangi alanların nokta olduğunu bulup hepsini kaydırır, yani yeni parça türü
 ayrıca kod istemez.
+
+### Seçerek kopyalama (yığın kopyası)
+
+⧉ aracıyla **boş alandan sürüklersen** kutu çıkar (yeşil — Taşı modundaki sarı
+seçim kutusundan ayırt edilsin diye) ve bırakınca kutunun içindeki her şey
+**birlikte** kopyalanır. Taşı modunda seçim varken **Ctrl/Cmd+D** (ya da
+Ctrl+V) aynı işi yapar; Ctrl+C yalnızca "kaç parça kopyalanacak" ipucunu
+gösterir — arada pano yok, kopyalanan şey seçimin kendisi. Ayrı bir pano
+tutmak yanlış beklenti kurardı: başka sekmeye yapıştırılamaz.
+
+İki kural yığın kopyasını tek parça kopyasından ayırıyor:
+
+- **Kayma ortak hesaplanır.** `parcaKopyala` tek parçayı tahtanın içinde
+  tutmak için kendi başına kısıtlıyordu; yığında bu, kenardaki parçayı
+  kaydırıp aradaki mesafeyi bozar (merdiven merdiven olmaktan çıkar). Bu
+  yüzden `cogaltSecim` kısıtlamayı önce **topluca** yapıp herkese aynı kaymayı
+  uyguluyor, `parcaKopyala` da `kissiz` bayrağıyla çağrılıyor.
+- **Stok yetmezse hiçbiri kopyalanmaz.** Tür tür sayılıp bakılıyor. Yarısını
+  kopyalamak sessizce bozuk bir yığın bırakır ve oyuncu neyin eksik olduğunu
+  göremez.
+
+Kopyalar imlece bağlanmıyor (kutu **pointerup**'ta biter, düğme zaten
+bırakılmıştır — bağlansa tuşa basmadan sürünen bir yığın kalırdı): 30 px
+kaymış ve seçili duruyorlar, üstlerine basıp sürükleyerek ya da ok tuşlarıyla
+yerleştiriliyorlar.
 
 **✋ Taşı** aracı yerleştirilmiş parçaları düzenler: gövdesinden sürüklersen
 parça bütün hâlde kayar, üstüne tıklarsan **seçilir** ve tutamakları (beyaz
@@ -208,12 +262,31 @@ Ses fizikten doğuyor; iki ayrı olay var:
 - **Vuruş** — top bir parçaya *çarptığında*. Perde parçanın notası, sertlik
   çarpma hızından (`c.vn`) gelir.
 - **Yuvarlanma** — top yüzeye değip *kayarken*. Ayrı bir nota değil: tek,
-  sürekli bir sürtünme sesi (döngülü gürültü + bant geçiren), yüksekliği ve
-  tizliği topun **teğetsel** hızını izliyor.
+  sürekli bir sürtünme sesi; yüksekliği teğetsel hızı, **perdesi topun tahtadaki
+  yüksekliğini** izliyor.
 
 Böylece domino zinciri "tak tak tak" ederken uzun rampa "şşşş" diye
 duyuluyor. Her temas ikisini birden besleyebilir: `carpmaSesi` hızın normal
 bileşenini vuruşa, teğetsel bileşenini yuvarlanmaya yollar.
+
+#### Yuvarlanma sesi: neden yeniden yazıldı
+
+İlk hâli beyaz gürültü + tek bant geçirendi ve perdeyi **hız** belirliyordu.
+İki sorunu vardı: ses "şşşş" diye tiz bir hışırtıydı, ve perde her sekmede
+zıpladığı için ortaya ritimsiz bir gürültü çıkıyordu. Yenisi:
+
+- Gürültü **pembeye yakın** (tek kutuplu alçak geçirenden geçmiş), üstüne
+  bant geçiren (Q 2.6) ve bir alçak geçiren tavan — kalan tiz kesiliyor.
+- Altına zayıf bir **sinüs gövde** kondu: yalnız gürültü "hava" gibi
+  duyuluyordu, sinüsle birlikte yüzeyde kayan **ağır bir şey** oluyor.
+- Perde **yüksekliğe** bağlı: top tepedeyken ince, indikçe kalın
+  (`surtunme * 0.16^derinlik`). Makine baştan sona inen tek bir kayma
+  sesi veriyor — düşüş duyuluyor.
+
+Ölçüldü (parlaklık = fark sinyali RMS / sinyal RMS, tizlik vekili):
+eski **0,22** → yeni tepede **0,084**, dipte **0,016**. Sıfır geçiş oranı
+1680 Hz → 544/100 Hz. Sinüs gövde sesi üç kat gürleştirdiği için kazanç
+çarpanı 0,5'ten 0,18'e indirildi.
 
 Yuvarlanma için her temasta yeni ses başlatılmıyor — tek bir sürekli ses
 var, kazancı her karede `yuvarlanmaGuncelle()` ile besleniyor. Değer sıfıra
@@ -228,7 +301,11 @@ Sağ şeritten seçiliyor, `localStorage`'a yazılıyor:
 |---|---|
 | 🥁 Davul | Sinüsün perdesi ilk anda hızla düşüyor + gürültü transiyenti — kick/tom/hi-hat/zil |
 | 🎸 Gitar | Karplus-Strong: gürültü patlaması gecikme hattında dolaşırken tizini kaybeder |
-| 🎹 Marimba | Temel + 4. harmonik (önce sönüyor) + çok kısa tokmak vuruşu |
+| 🎼 Marimba | Temel + 4. harmonik (önce sönüyor) + çok kısa tokmak vuruşu |
+| 🎹 Piyano | 8 harmonik, her biri kendi hızıyla sönüyor + çekiç darbesi; harmonikler tam katta **değil** |
+| 🔔 Çan | İnharmonik kat dizisi (1, 2, 2.4, 3, 4.5, 5.33) — tam kat verilseydi org sesi çıkardı |
+| 🎵 Müzik kutusu | Temel + 3. ve 6. harmonik, hepsi hızlı sönüyor + çelik dişin tırnak sesi |
+| 🪘 Kalimba | Neredeyse saf temel + çabuk sönen oktav + tahta gövdenin pest tıklaması |
 
 Her enstrüman aynı **karakter adlarını** tanır (`celik`, `naylon`, `bas`,
 `susturma`, `armonik`), o yüzden parça→tını eşlemesi (`TINI`) enstrüman
@@ -237,9 +314,42 @@ marimbada uzun çubuk olur. Yeni enstrüman eklemek = `CALGILAR`'a bir satır +
 bir `uret(f, kar, sr)` fonksiyonu; normalleştirme, kırpma önleme ve
 önbellekleme ortak (`vurusSesi`).
 
+**Çalgılar arası denge (`seviye`).** Her vuruş kendi içinde 0,9 tepeye
+normalize ediliyor ama tepe ile gürlük ayrı şeyler: uzun sönen çan ile kısa
+davul aynı tepede çok farklı duyuluyordu (ölçüldü: RMS 0,24'e karşı 0,10).
+`seviye` çarpanları RMS'i ~0,15 civarında eşitliyor, yani çalgı değiştirmek
+artık ses seviyesini değiştirmiyor. Yeni çalgı eklerken bu ölçümü tekrarla.
+
+**Gövde süzgeci yalnızca gitarda.** Kod gitar kutusu için yazılmıştı ama
+`notaCal` **hepsini** oradan geçiriyordu; davul ve marimba boşuna 3,2 kHz
+üstü −5 dB yiyordu. Artık `CALGILAR[...].govde` bayrağı olan geçiyor.
+
 Ses WebAudio ile üretiliyor, örnek dosyası yok. 🔊 düğmesi sesi kapatır.
 Kayıt modunda hem vuruşlar hem yuvarlanma videoya gömülüyor
 (`MediaStreamDestination` kanalı akışa ekleniyor).
+
+### Çıkıştaki tavan (kırpılma önleme)
+
+Her vuruş kendi içinde 0.9 tepeye normalize ediliyor, ama **toplam** kimsenin
+denetiminde değildi: kalabalık bir makinede on-otuz nota üst üste binince
+karta giden sinyal 1.0'ı aşıyor ve donanım sert kırpıyordu — kullanıcının
+duyduğu "seste bozulma" buydu. Ölçüldü (`OfflineAudioContext`, 30 nota + açık
+yuvarlanma): davulda tepe **1.71**, marimbada **1.74**, yüzlerce örnek ±1'e
+yapışmış.
+
+Ana kazançtan sonra iki halka kondu:
+
+1. `DynamicsCompressorNode` (eşik −10 dB, oran 12, atak 3 ms) tepeleri toparlar,
+2. `WaveShaper` + `tanh` eğrisi (`kirpmaEgrisi()`, 4× örnekleme) kalan taşmayı
+   sertlik yerine yumuşak doygunluğa çevirir.
+
+Aynı ölçümde tepe 0.95/0.97'ye iniyor, kırpılan örnek sıfır. `kayitHedef`
+artık **kırpıcıdan sonra** bağlı — video da sınırlanmış sesi alıyor.
+
+Buna ek olarak `notaCal` aynı anda çalan ses sayısını sayıyor (`SES.aktif`):
+`SES_TAVAN`(12) aşılınca yeni notaların seviyesi kısılıyor, iki katı aşılınca
+nota hiç başlatılmıyor. Amaç sadece seviye değil işlemci yükü: onlarca uzun
+notada çözücü tıkanınca ses cızırdıyor.
 
 ### Gitar sentezinde iki tuzak
 
@@ -557,13 +667,21 @@ yazılmadığı için köprü gerekiyor, ama fonksiyonlar zaten globalde duruyor
 üzerlerine aynı adlı getter tanımlanırsa getter kendini çağırıp sonsuz
 döngüye giriyor.
 
-Şu an **68/68 geçiyor** — 15 fizik + 9 taşıma + 10 döndürme/uzatma +
-21 paylaşma linki + 13 dokunmatik. Paylaşma testleri fiziği değil **bozuk/kötü niyetli bir
+Şu an **87/87 geçiyor** — 15 fizik + 9 taşıma + 10 döndürme/uzatma +
+21 paylaşma linki + 13 dokunmatik + 7 seçerek kopyalama + 12 kütüphane/boşaltma. Paylaşma testleri fiziği değil **bozuk/kötü niyetli bir
 linkin reddedilip reddedilmediğini** ölçüyor: NaN koordinat, tahta dışı
 koordinat, aşırı uzunluk, uydurma nota, bilinmeyen parça/bölüm/sürüm, 5000
 parçalık şişirme — ve misafir modunun oyuncunun kaydını ezmediği.
 Dokunmatik testleri tap / sürükleme / uzun basma ayrımının doğru yapıldığını
-ve ikinci parmağın başlamış işlemi iptal ettiğini ölçüyor. Fizik
+ve ikinci parmağın başlamış işlemi iptal ettiğini ölçüyor. Seçerek kopyalama
+testlerinin ölçtüğü şey sayı değil **geometri ve stok**: kopyalar arası
+mesafe korunuyor mu, boş kutu parça üretiyor mu, stok yetmeyince hiçbiri
+kopyalanmıyor mu.
+
+> Tuzak: kopyalama testleri fare koordinatı kullanıyor, ondan önceki çimdik
+> testi ise görüşü kaydırıyor. `GORUS` sıfırlanmazsa kutu bambaşka bir yere
+> düşüyor ve testler "hiçbir şey kopyalanmadı" diye sessizce geçiyor gibi
+> görünüyor — bu yüzden blok başında `GORUS.x/y/olcek` elle sıfırlanıyor. Fizik
 tarafı: rampa→zil, domino zinciri→zil, fırlatıcı, tahterevalli, trambolin,
 konveyör, üfleyici, mıknatıs, döner tabla (sağ ve sol) ve melodi modu
 (sırayla çalınca kazanır, ters sırada kazanmaz, zil kazandırmaz) ve
@@ -583,6 +701,36 @@ değiştiğinde oyuncunun kurduğu makineler kendi bölümünde kalıyor.
 - **Döner tablada topu merkezin tam üstüne düşürme.** Orada yüzey hızı sıfır,
   parça çalışsa da hiçbir şey olmuyor gibi görünür; test topu bilerek
   merkezden kaçık düşürüyor.
+
+## Bölüm çözülebilirlik testi (`node bolum-testi.js`)
+
+Yıldızlı altı bölümün her biri için bir **referans çözüm** tutuluyor ve
+motorda koşturuluyor. Ölçtüğü üç şey: bölüm çözülebiliyor mu, çözüm bölümün
+**stoğuna** sığıyor mu, ve **3 yıldız gerçekten alınabiliyor mu**. Çözümler
+elle tahmin edilmedi; motor koşturularak arandı.
+
+Durum (10 Ağustos 2026): **24/24 geçiyor.** Yıldız hedeflerinin hepsi
+ulaşılabilir — en darı "2 · Domino" (6 parça hedefine 6 parçayla) ve
+"4 · İlk melodi" (3'e 3). Bu ikisinde hedefi bir aşağı çekmek bölümü
+3 yıldızsız bırakır.
+
+Ölçerken çıkan ve bölüm tasarımını ilgilendiren üç şey:
+
+- **Zemine dikilen domino zili çalamaz.** Devrilen domino neredeyse yatay
+  duruyor (ucu tabandan ~4 px yukarıda), zil ise zeminden 44 px yüksekte.
+  "2 · Domino" ancak zincir **havada** kurulursa çözülüyor. Bölüm metni bunu
+  söylemiyor; oyuncu büyük olasılıkla önce zemine dizmeyi dener.
+- **Melodi bölümlerinde rampalar uç uca bağlanmalı.** Ayrık rampalarda top
+  sekiyor ve aynı parçaya 0,09 sn'den geç gelen ikinci çarpma ayrı vuruş
+  sayılıyor (`carpmaOlayi`) — yani yanlış nota, yani "fazla". Ölçüldü:
+  ayrık yerleşimle 1025 kazanan adayın **sıfırı** temizdi; uç uca bağlayınca
+  temiz koşu çıktı. Jingle Bells örneği de bu kalıpta.
+- **"3 · Zıplat" vaadini tutmuyor.** Bölüm *"topu yükselten bir şey olmadan
+  çıkılmıyor"* diyor, ama zil (y=150) topun başlangıcından (y=70) aşağıda ve
+  duvar yalnızca y=300'ün altını kapatıyor. İki rampayla, hiçbir yükseltici
+  kullanmadan çözülüyor (ölçüldü: 13,45 sn). Yıldız hedefi 13 sn olduğu için
+  bu yol 3 yıldız vermiyor — yani bölüm kazara dengede duruyor, tasarımla
+  değil. Zili başlangıcın üstüne almak (ör. y=40) vaadi gerçek yapar.
 
 ## Bilinen sınırlar
 

@@ -182,6 +182,29 @@
   .notaIzgara button.uzakOktav{opacity:.62}
   .menuAlt{margin-top:9px;padding-top:9px;border-top:1px solid #39415a}
   .menuAlt button{width:100%;justify-content:center;font-size:13px}
+
+  /* Kutuphane paneli: ekranin ortasinda, nota menusuyle ayni kabuk.
+     Serit menulerin icine sigmaz - kayitlar listelenecek, uzayan bir icerik. */
+  #arsivPanel{position:fixed;display:none;z-index:60;left:50%;top:50%;
+              transform:translate(-50%,-50%);width:min(420px,92vw);
+              max-height:80vh;overflow:auto;padding:14px;
+              background:linear-gradient(180deg,#20242f,#171a23);
+              border:1px solid #39415a;border-radius:14px;box-shadow:0 18px 40px #000a}
+  #arsivPanel h3{margin:0 0 10px;font-size:14px}
+  .arsivSatir{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+  .arsivSatir input{flex:1;min-width:0;padding:7px 9px;border-radius:9px;
+                    border:1px solid #39415a;background:#12141b;color:var(--ink);font:inherit}
+  .arsivListe{margin-top:10px;padding-top:10px;border-top:1px solid #39415a}
+  .arsivKayit{display:flex;gap:6px;align-items:center;margin-bottom:5px}
+  .arsivKayit .ad{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+                  white-space:nowrap;font-size:13px}
+  .arsivKayit .bilgi{font-size:11px;color:var(--dim)}
+  .arsivBos{font-size:12px;color:var(--dim);padding:6px 2px}
+  /* Yikici dugmeler kirmizi ve kendi seritlerinde: renk tek basina yetmiyor,
+     ayri durmalari da gerekiyor. */
+  .tehlikeBar{margin-top:6px}
+  button.tehlike{border-color:#5a2b2b;color:#ffb4b4}
+  button.tehlike.soruyor{background:#5a2b2b;color:#fff}
   /* Tahta genisledikce yukselir; ekrandan tasmasin diye eni, kalan YUKSEKLIGE
      gore de sinirlaniyor (1000/640 en-boy orani sabit). */
   .wrap{position:relative;border:1px solid var(--line);border-radius:14px;overflow:hidden;
@@ -197,6 +220,12 @@
   .renkler button.on{border-color:#ffd45e;box-shadow:0 0 0 2px #ffb70366,0 2px 8px #0007;
                      background:var(--ornek);font-weight:400}
   canvas{display:block;width:100%;height:auto;touch-action:none}
+  /* Parmakla surukleyince tarayici metin secmeye kalkiyor ve secim mavisi
+     tuvalin uzerine biniyor. CrazyGames'in mobil sartlarindan biri de bu. */
+  body{-webkit-user-select:none;user-select:none}
+  /* Iki istisna: kutuphane ad kutusu ve paylasma linki. Link kutusu elle
+     kopyalanmak icin var — secilemezse hicbir ise yaramaz. */
+  #arsivPanel input,.baglanti{-webkit-user-select:text;user-select:text}
   .ust{position:absolute;inset:0;display:none;place-items:center;
        background:rgba(10,12,17,.82);text-align:center;padding:20px}
   .ust.gor{display:grid}
@@ -274,7 +303,8 @@
           <div class="bar">
             <button class="primary" id="basla"></button>
             <button id="sifirla"></button>
-            <button id="temizle"></button>
+            <button id="kaydetBtn"></button>
+            <button id="acBtn"></button>
             <button id="kayit"></button>
             <button id="paylasBtn"></button>
             <button id="sesBtn"></button>
@@ -286,6 +316,12 @@
             <div class="ayirac"></div>
             <div class="renkler" id="renkBar"></div>
           </div>
+        </div>
+        <!-- Silme en altta, kendi basina: yikici olan tek dugme bu. Digerleri
+             arasinda dururken yanlislikla tiklaniyordu; hem ayrildi hem de
+             iki adima bolundu (bkz. temizleTikla). -->
+        <div class="bar tehlikeBar">
+          <button id="temizle" class="tehlike"></button>
         </div>
         <!-- Sayac ve dil en sonda: seritte tamamen gizleniyorlar, altlarinda
              baska dugme olmadigi icin gizlenmeleri hicbir seyi kaydirmiyor. -->
@@ -299,6 +335,7 @@
 </div>
 
 <div id="notaMenu"></div>
+<div id="arsivPanel"></div>
 
 <script>
 "use strict";
@@ -824,7 +861,22 @@ const SOZLUK = {
     ui: {
       baslik: "Rube Goldberg Workshop",
       altbaslik: "Make a simple job needlessly complicated: get the ball to the bell.",
-      calistir: "▶ Run", sifirla: "↺ Reset", temizle: "Clear pieces",
+      calistir: "▶ Run", sifirla: "↺ Reset", temizle: "Clear the board",
+      temizleSor: "Clear it? Click again",
+      temizleOldu: n => `${n} pieces cleared — press Ctrl+Z to bring them back.`,
+      temizleGeri: n => `${n} pieces restored.`,
+      kaydetBtn: "💾 Save", acBtn: "📂 Open",
+      arsivBaslik: "Your machines", arsivAdYer: "Name this machine…",
+      arsivKaydetBtn: "Save", arsivAcBtn: "Open", arsivSilBtn: "Delete", arsivKapat: "Close",
+      arsivBosListe: "Nothing saved yet. Name the machine on the board and save it.",
+      arsivKaydedildi: a => `Saved as “${a}”. Open it any time from 📂.`,
+      arsivUzerineYazildi: a => `“${a}” overwritten with what is on the board.`,
+      arsivYuklendi: a => `“${a}” loaded.`,
+      arsivSilindi: a => `“${a}” deleted from your machines.`,
+      arsivYok: "That machine is gone.",
+      arsivAdSor: "Give it a name first.",
+      arsivBosMakine: "The board is empty — build something first.",
+      arsivDolu: "No room left in storage. Delete a machine you no longer need.",
       kayit: "🎬 Record (vertical)", kayitDurdur: "⏹ Stop & save", sil: "🗑 Delete",
       paylas: "🔗 Share link",
       bsOrnek: "Examples",
@@ -868,8 +920,11 @@ const SOZLUK = {
       zemingunbatimi: "Sunset", zeminkagit: "Paper",
       cogalt: "⧉ Duplicate",
       cogaltIpuc: ad => `${ad} duplicated — the copy is selected, drag it where you want it.`,
-      cogaltAracIpuc: "Click a placed piece to <b>copy</b> it with its angle, size and note — then drag the copy into place.",
-      cogaltYok: "Nothing to copy here — click a piece you placed.",
+      cogaltAracIpuc: "Click a piece to <b>copy</b> it with its angle, size and note — or drag a box over several to copy them all at once.",
+      cogaltYok: "Nothing to copy here — click a piece, or drag a box around several.",
+      cogaltCoklu: n => `${n} pieces copied — the copies are selected. Drag them into place, or use the arrow keys.`,
+      kopyaKutuIpuc: "Drag a box around the pieces you want — everything inside gets copied together.",
+      kopyaHazir: n => `${n} selected. Press Ctrl+V (or Ctrl+D) to copy them.`,
       bsYakin: "Zoom", yakinlas: "Zoom in", uzaklas: "Zoom out",
       bsCalgi: "Instrument",
       melodiBaslik: m => `Melody played! ${m}`,
@@ -881,6 +936,7 @@ const SOZLUK = {
       yildizTemiz: "Play it with no stray hits for another star.",
       yildizTam: "Three stars. Nothing left to squeeze out of this one.",
       calgidavul: "Drums", calgigitar: "Guitar", calgimarimba: "Marimba",
+      calgipiyano: "Piano", calgican: "Bells", calgikutu: "Music box", calgikalimba: "Kalimba",
       kaydirIpuc: "Drag the empty board to pan; the mouse wheel zooms.",
     },
     parca: {
@@ -911,7 +967,22 @@ const SOZLUK = {
     ui: {
       baslik: "Rube-Goldberg-Werkstatt",
       altbaslik: "Mach eine einfache Aufgabe unnötig kompliziert: Bring die Kugel zur Glocke.",
-      calistir: "▶ Start", sifirla: "↺ Zurücksetzen", temizle: "Teile löschen",
+      calistir: "▶ Start", sifirla: "↺ Zurücksetzen", temizle: "Brett leeren",
+      temizleSor: "Wirklich? Nochmal klicken",
+      temizleOldu: n => `${n} Teile gelöscht — Strg+Z holt sie zurück.`,
+      temizleGeri: n => `${n} Teile zurückgeholt.`,
+      kaydetBtn: "💾 Speichern", acBtn: "📂 Öffnen",
+      arsivBaslik: "Deine Maschinen", arsivAdYer: "Maschine benennen…",
+      arsivKaydetBtn: "Speichern", arsivAcBtn: "Öffnen", arsivSilBtn: "Löschen", arsivKapat: "Schließen",
+      arsivBosListe: "Noch nichts gespeichert. Gib der Maschine einen Namen und speichere sie.",
+      arsivKaydedildi: a => `Als „${a}“ gespeichert. Jederzeit über 📂 zu öffnen.`,
+      arsivUzerineYazildi: a => `„${a}“ mit dem Brett überschrieben.`,
+      arsivYuklendi: a => `„${a}“ geladen.`,
+      arsivSilindi: a => `„${a}“ gelöscht.`,
+      arsivYok: "Diese Maschine gibt es nicht mehr.",
+      arsivAdSor: "Gib ihr zuerst einen Namen.",
+      arsivBosMakine: "Das Brett ist leer — bau erst etwas.",
+      arsivDolu: "Kein Speicherplatz mehr. Lösche eine Maschine.",
       kayit: "🎬 Aufnahme (hochkant)", kayitDurdur: "⏹ Stoppen & sichern", sil: "🗑 Löschen",
       paylas: "🔗 Link teilen",
       bsOrnek: "Beispiele",
@@ -955,8 +1026,11 @@ const SOZLUK = {
       zemingunbatimi: "Sonnenuntergang", zeminkagit: "Papier",
       cogalt: "⧉ Duplizieren",
       cogaltIpuc: ad => `${ad} dupliziert — die Kopie ist ausgewählt, zieh sie an ihren Platz.`,
-      cogaltAracIpuc: "Klick ein gesetztes Teil an, um es mit Winkel, Größe und Note zu <b>kopieren</b> — dann zieh die Kopie an ihren Platz.",
-      cogaltYok: "Hier gibt es nichts zu kopieren — klick ein gesetztes Teil an.",
+      cogaltAracIpuc: "Klick ein Teil an, um es mit Winkel, Größe und Note zu <b>kopieren</b> — oder zieh einen Rahmen über mehrere und kopier sie zusammen.",
+      cogaltYok: "Hier gibt es nichts zu kopieren — klick ein Teil an oder zieh einen Rahmen um mehrere.",
+      cogaltCoklu: n => `${n} Teile kopiert — die Kopien sind ausgewählt. Zieh sie an ihren Platz oder nimm die Pfeiltasten.`,
+      kopyaKutuIpuc: "Zieh einen Rahmen um die Teile — alles darin wird zusammen kopiert.",
+      kopyaHazir: n => `${n} ausgewählt. Drück Strg+V (oder Strg+D) zum Kopieren.`,
       bsYakin: "Zoom", yakinlas: "Heranzoomen", uzaklas: "Herauszoomen",
       bsCalgi: "Instrument",
       melodiBaslik: m => `Melodie gespielt! ${m}`,
@@ -968,6 +1042,7 @@ const SOZLUK = {
       yildizTemiz: "Spiel sie ohne Fehlschläge für einen weiteren Stern.",
       yildizTam: "Drei Sterne. Hier ist nichts mehr herauszuholen.",
       calgidavul: "Schlagzeug", calgigitar: "Gitarre", calgimarimba: "Marimba",
+      calgipiyano: "Klavier", calgican: "Glocken", calgikutu: "Spieluhr", calgikalimba: "Kalimba",
       kaydirIpuc: "Zieh das leere Brett zum Verschieben; das Mausrad zoomt.",
     },
     parca: {
@@ -997,7 +1072,22 @@ const SOZLUK = {
     ui: {
       baslik: "Atelier Rube Goldberg",
       altbaslik: "Rends une tâche simple inutilement compliquée : amène la bille jusqu'à la cloche.",
-      calistir: "▶ Lancer", sifirla: "↺ Réinitialiser", temizle: "Effacer les pièces",
+      calistir: "▶ Lancer", sifirla: "↺ Réinitialiser", temizle: "Vider le plateau",
+      temizleSor: "Vider ? Clique encore",
+      temizleOldu: n => `${n} pièces effacées — Ctrl+Z les ramène.`,
+      temizleGeri: n => `${n} pièces récupérées.`,
+      kaydetBtn: "💾 Enregistrer", acBtn: "📂 Ouvrir",
+      arsivBaslik: "Tes machines", arsivAdYer: "Nomme cette machine…",
+      arsivKaydetBtn: "Enregistrer", arsivAcBtn: "Ouvrir", arsivSilBtn: "Supprimer", arsivKapat: "Fermer",
+      arsivBosListe: "Rien d’enregistré. Nomme la machine du plateau et enregistre-la.",
+      arsivKaydedildi: a => `Enregistrée sous « ${a} ». Ouvre-la quand tu veux avec 📂.`,
+      arsivUzerineYazildi: a => `« ${a} » remplacée par le plateau actuel.`,
+      arsivYuklendi: a => `« ${a} » chargée.`,
+      arsivSilindi: a => `« ${a} » supprimée.`,
+      arsivYok: "Cette machine n’existe plus.",
+      arsivAdSor: "Donne-lui d’abord un nom.",
+      arsivBosMakine: "Le plateau est vide — construis d’abord.",
+      arsivDolu: "Plus de place. Supprime une machine.",
       kayit: "🎬 Enregistrer (vertical)", kayitDurdur: "⏹ Arrêter et garder", sil: "🗑 Supprimer",
       paylas: "🔗 Partager le lien",
       bsOrnek: "Exemples",
@@ -1041,8 +1131,11 @@ const SOZLUK = {
       zemingunbatimi: "Coucher de soleil", zeminkagit: "Papier",
       cogalt: "⧉ Dupliquer",
       cogaltIpuc: ad => `${ad} dupliquée — la copie est sélectionnée, fais-la glisser où tu veux.`,
-      cogaltAracIpuc: "Clique une pièce posée pour la <b>copier</b> avec son angle, sa taille et sa note — puis fais glisser la copie.",
-      cogaltYok: "Rien à copier ici — clique une pièce que tu as posée.",
+      cogaltAracIpuc: "Clique une pièce pour la <b>copier</b> avec son angle, sa taille et sa note — ou trace un cadre sur plusieurs pour toutes les copier.",
+      cogaltYok: "Rien à copier ici — clique une pièce, ou trace un cadre autour de plusieurs.",
+      cogaltCoklu: n => `${n} pièces copiées — les copies sont sélectionnées. Fais-les glisser, ou utilise les flèches.`,
+      kopyaKutuIpuc: "Trace un cadre autour des pièces — tout ce qui est dedans est copié ensemble.",
+      kopyaHazir: n => `${n} sélectionnées. Appuie sur Ctrl+V (ou Ctrl+D) pour les copier.`,
       bsYakin: "Zoom", yakinlas: "Zoom avant", uzaklas: "Zoom arrière",
       bsCalgi: "Instrument",
       melodiBaslik: m => `Mélodie jouée ! ${m}`,
@@ -1054,6 +1147,7 @@ const SOZLUK = {
       yildizTemiz: "Joue-la sans coup en trop pour une étoile de plus.",
       yildizTam: "Trois étoiles. Il n'y a plus rien à en tirer.",
       calgidavul: "Batterie", calgigitar: "Guitare", calgimarimba: "Marimba",
+      calgipiyano: "Piano", calgican: "Cloches", calgikutu: "Boîte à musique", calgikalimba: "Kalimba",
       kaydirIpuc: "Fais glisser le plateau vide pour le déplacer ; la molette zoome.",
     },
     parca: {
@@ -1116,7 +1210,22 @@ function bT(i, alan) {
 const YEDEK_UI = {
   baslik: "Rube Goldberg Atölyesi",
   altbaslik: "Basit bir işi gereksiz yere karmaşık yap: topu zile ulaştır.",
-  calistir: "▶ Çalıştır", sifirla: "↺ Sıfırla", temizle: "Parçaları sil",
+  calistir: "▶ Çalıştır", sifirla: "↺ Sıfırla", temizle: "Tahtayı boşalt",
+  temizleSor: "Boşaltayım mı? Tekrar tıkla",
+  temizleOldu: n => `${n} parça silindi — geri almak için Ctrl+Z.`,
+  temizleGeri: n => `${n} parça geri geldi.`,
+  kaydetBtn: "💾 Kaydet", acBtn: "📂 Aç",
+  arsivBaslik: "Makinelerin", arsivAdYer: "Bu makineye bir ad ver…",
+  arsivKaydetBtn: "Kaydet", arsivAcBtn: "Aç", arsivSilBtn: "Sil", arsivKapat: "Kapat",
+  arsivBosListe: "Henüz kayıt yok. Tahtadaki makineye ad verip kaydet.",
+  arsivKaydedildi: a => `“${a}” olarak kaydedildi. İstediğin zaman 📂 ile aç.`,
+  arsivUzerineYazildi: a => `“${a}” tahtadakiyle değiştirildi.`,
+  arsivYuklendi: a => `“${a}” yüklendi.`,
+  arsivSilindi: a => `“${a}” makinelerinden silindi.`,
+  arsivYok: "O makine artık yok.",
+  arsivAdSor: "Önce bir ad ver.",
+  arsivBosMakine: "Tahta boş — önce bir şeyler kur.",
+  arsivDolu: "Kayıt yeri doldu. Kullanmadığın bir makineyi sil.",
   kayit: "🎬 Kayıt (dikey)", kayitDurdur: "⏹ Bitir ve kaydet", sil: "🗑 Sil",
   paylas: "🔗 Link paylaş",
   bsOrnek: "Örnekler",
@@ -1160,8 +1269,11 @@ const YEDEK_UI = {
   zemingunbatimi: "Gün batımı", zeminkagit: "Kâğıt",
   cogalt: "⧉ Çoğalt",
   cogaltIpuc: ad => `${ad} çoğaltıldı — kopya seçili, sürükleyip yerine koy.`,
-  cogaltAracIpuc: "Koyduğun bir parçaya tıkla: açısı, boyu ve notasıyla <b>kopyalanır</b> — sonra kopyayı sürükleyip yerine bırak.",
-  cogaltYok: "Burada kopyalanacak bir şey yok — koyduğun bir parçaya tıkla.",
+  cogaltAracIpuc: "Bir parçaya tıkla: açısı, boyu ve notasıyla <b>kopyalanır</b> — ya da birkaçının üstüne kutu çiz, hepsi birden kopyalansın.",
+  cogaltYok: "Burada kopyalanacak bir şey yok — bir parçaya tıkla ya da birkaçının etrafına kutu çiz.",
+  cogaltCoklu: n => `${n} parça kopyalandı — kopyalar seçili. Sürükleyip yerine koy ya da ok tuşlarını kullan.`,
+  kopyaKutuIpuc: "İstediğin parçaların etrafına kutu çiz — içinde kalan her şey birlikte kopyalanır.",
+  kopyaHazir: n => `${n} parça seçili. Kopyalamak için Ctrl+V (ya da Ctrl+D).`,
   bsYakin: "Yakınlaştırma", yakinlas: "Yakınlaş", uzaklas: "Uzaklaş",
   bsCalgi: "Enstrüman",
   melodiBaslik: m => `Melodi çaldı! ${m}`,
@@ -1173,6 +1285,7 @@ const YEDEK_UI = {
   yildizTemiz: "Fazla çarpma olmadan çal, bir yıldız daha.",
   yildizTam: "Üç yıldız. Bu bölümden çıkacak başka bir şey yok.",
   calgidavul: "Davul", calgigitar: "Gitar", calgimarimba: "Marimba",
+  calgipiyano: "Piyano", calgican: "Çan", calgikutu: "Müzik kutusu", calgikalimba: "Kalimba",
   kaydirIpuc: "Boş tahtayı sürükleyerek kaydır; tekerlek yakınlaştırır.",
 };
 
@@ -1215,7 +1328,10 @@ function arayuzuTazele() {
   document.querySelector(".sub").textContent = T("altbaslik");
   dugmeYaz(document.getElementById("basla"), T("calistir"));
   dugmeYaz(document.getElementById("sifirla"), T("sifirla"));
-  dugmeYaz(document.getElementById("temizle"), T("temizle"), "🧹");
+  temizleTazele();
+  dugmeYaz(document.getElementById("kaydetBtn"), T("kaydetBtn"));
+  dugmeYaz(document.getElementById("acBtn"), T("acBtn"));
+  arsivCiz();                                   // panel acikken dil degisebilir
   dugmeYaz(document.getElementById("kayit"), T("kayit"));
   dugmeYaz(document.getElementById("paylasBtn"), T("paylas"));
   misafirTazele();
@@ -1345,13 +1461,71 @@ const CUBUKLAR = {
   armonik:  { sure: 1.80, harmonik: 0.60, tokmak: 0.10, guc: 0.75 },
 };
 
+/* Piyano teli: cok sayida harmonik, ustune INHARMONIKLIK. Gercek telin
+ * kalinligi yuzunden ust harmonikler tam katta degil biraz yukarida durur
+ * (`kirilma`); piyanoyu orgtan ayiran sey buyuk olcude bu. */
+const TELLERPIY = {
+  celik:    { sure: 1.6, kirilma: 0.0005, parlak: 0.85, cekic: 0.30, guc: 1.00 },
+  naylon:   { sure: 2.2, kirilma: 0.0004, parlak: 0.60, cekic: 0.20, guc: 0.95 },
+  bas:      { sure: 3.0, kirilma: 0.0009, parlak: 0.45, cekic: 0.35, guc: 1.10 },
+  susturma: { sure: 0.45, kirilma: 0.0005, parlak: 0.75, cekic: 0.40, guc: 0.85 },
+  armonik:  { sure: 2.6, kirilma: 0.0002, parlak: 1.00, cekic: 0.12, guc: 0.78 },
+};
+
+/* Can/zil: harmonikleri tam kat DEGIL. Bu oranlar cani can yapan sey —
+ * kat oranlari verilseydi org sesi cikardi. */
+const CANLAR = {
+  celik:    { sure: 2.4, vurus: 0.30, guc: 0.95 },
+  naylon:   { sure: 3.2, vurus: 0.18, guc: 0.90 },
+  bas:      { sure: 4.5, vurus: 0.22, guc: 1.05 },
+  susturma: { sure: 0.55, vurus: 0.40, guc: 0.85 },
+  armonik:  { sure: 5.0, vurus: 0.10, guc: 0.72 },
+};
+const CAN_KATLARI = [1, 2.0, 2.4, 3.0, 4.5, 5.33];
+
+/* Muzik kutusu: kisa, cok parlak, cabuk sonen celik dis. Tek numarasi
+ * temelin ustundeki iki tiz harmonik ve sert bir tirnak sesi. */
+const KUTULAR = {
+  celik:    { sure: 0.9, tiz: 0.55, tirnak: 0.40, guc: 0.95 },
+  naylon:   { sure: 1.2, tiz: 0.35, tirnak: 0.25, guc: 0.90 },
+  bas:      { sure: 1.8, tiz: 0.20, tirnak: 0.20, guc: 1.05 },
+  susturma: { sure: 0.3, tiz: 0.45, tirnak: 0.50, guc: 0.85 },
+  armonik:  { sure: 2.2, tiz: 0.70, tirnak: 0.15, guc: 0.75 },
+};
+
+/* Kalimba: yumusak, neredeyse saf temel + hafif tahta tiklamasi. Oyunun
+ * en sakin calgisi — kalabalik makinelerde kulak yormuyor. */
+const DILLER_K = {
+  celik:    { sure: 0.8, ikinci: 0.30, tahta: 0.30, guc: 0.95 },
+  naylon:   { sure: 1.1, ikinci: 0.18, tahta: 0.20, guc: 0.92 },
+  bas:      { sure: 1.7, ikinci: 0.10, tahta: 0.16, guc: 1.08 },
+  susturma: { sure: 0.25, ikinci: 0.22, tahta: 0.38, guc: 0.85 },
+  armonik:  { sure: 2.0, ikinci: 0.42, tahta: 0.10, guc: 0.74 },
+};
+
 /* Calgi = vurusu ureten kod + o calginin karakter tablosu. Karakter
  * ADLARI her calgida ayni (celik/naylon/bas/susturma/armonik), boylece
- * asagidaki TINI eslemesi calgi degisince de gecerli kaliyor. */
+ * asagidaki TINI eslemesi calgi degisince de gecerli kaliyor.
+ *
+ * `surtunme` artik "hiz carpani" degil, bu calginin YUVARLANMA sesinin en
+ * tiz ucu (Hz): top tahtanin tepesindeyken buradan basliyor, indikce
+ * kalinlasiyor (bkz. yuvarlanmaGuncelle). */
+/* `seviye`: calgilar arasi ses dengesi. Her vurus kendi icinde 0.9 tepeye
+ * normalize ediliyor ama TEPE ile GURLUK ayni sey degil — uzun sonen can
+ * ile kisa davul ayni tepede cok farkli duyuluyordu (olculdu: RMS 0.24'e
+ * karsi 0.10). Bu carpanlar RMS'i ~0.15 civarinda esitliyor; calgi
+ * degistirmek artik ses seviyesini degistirmiyor.
+ * `govde`: yalnizca gitar kutu rezonansindan geciyor. Once HEPSI geciyordu
+ * (kod gitar icin yazilmisti ama herkese uygulaniyordu) — davul ve marimba
+ * bosuna 3.2 kHz uzeri -5 dB yiyordu. */
 const CALGILAR = {
-  davul:   { im: "🥁", karakter: DAVULLAR, uret: davulUret, surtunme: 900 },
-  gitar:   { im: "🎸", karakter: TELLER,   uret: telUret,   surtunme: 1500 },
-  marimba: { im: "🎹", karakter: CUBUKLAR, uret: cubukUret, surtunme: 2200 },
+  davul:   { im: "🥁", karakter: DAVULLAR,  uret: davulUret,  surtunme: 900,  seviye: 1.45 },
+  gitar:   { im: "🎸", karakter: TELLER,    uret: telUret,    surtunme: 1500, seviye: 1.95, govde: true },
+  marimba: { im: "🎼", karakter: CUBUKLAR,  uret: cubukUret,  surtunme: 2200, seviye: 0.86 },
+  piyano:  { im: "🎹", karakter: TELLERPIY, uret: piyanoUret, surtunme: 1700, seviye: 0.62 },
+  can:     { im: "🔔", karakter: CANLAR,    uret: canUret,    surtunme: 2200, seviye: 0.58 },
+  kutu:    { im: "🎵", karakter: KUTULAR,   uret: kutuUret,   surtunme: 2400, seviye: 0.74 },
+  kalimba: { im: "🪘", karakter: DILLER_K,  uret: kalimbaUret, surtunme: 1200, seviye: 0.76 },
 };
 const CALGI_ANAHTAR = "rube-calgi";
 let calgiAd = "davul";
@@ -1365,8 +1539,22 @@ const TINI = {
   fan: "armonik", magnet: "bas", wall: "bas",
 };
 
-const SES = { ac: null, ana: null, govde: null, kayitHedef: null, acik: true,
+const SES = { ac: null, ana: null, govde: null, cikis: null, kayitHedef: null,
+              acik: true, aktif: 0,
               teller: new Map(), yuvar: null, yuvarHedef: 0, yuvarHiz: 0 };
+const SES_TAVAN = 12;   // bundan sonrasi kisiliyor, iki kati asilinca aliniyor
+
+/* Yumusak kirpma egrisi: tanh. Girisi -1..1'den alip cikisi asla 1'i
+ * gecmeyecek sekilde buker; sert kirpmanin kare dalga cizirtisi yerine
+ * hafif bir doygunluk verir. */
+function kirpmaEgrisi() {
+  const n = 2048, e = new Float32Array(n), k = 1.8;
+  for (let i = 0; i < n; i++) {
+    const x = (i / (n - 1)) * 2 - 1;
+    e[i] = Math.tanh(x * k) / Math.tanh(k);
+  }
+  return e;
+}
 
 function sesAc() {
   if (SES.ac) { if (SES.ac.state === "suspended") SES.ac.resume(); return; }
@@ -1375,7 +1563,20 @@ function sesAc() {
   SES.ac = new AC();
   SES.ana = SES.ac.createGain();
   SES.ana.gain.value = 0.22;
-  SES.ana.connect(SES.ac.destination);
+  // Cikista tavan: her vurus 0.9 tepeye normalize ediliyor, bir domino
+  // zinciri ya da akor ust uste bininca toplam 1.0'i asiyor ve karti sert
+  // kirpiyordu (citirti/hirilti). Once sinirlayici tepeleri toparliyor,
+  // ardindan tanh kirpici kalan tasmayi sertlik yerine yumusak doygunluga
+  // ceviriyor — hicbir ornek 1.0'i gecmiyor.
+  const sinir = SES.ac.createDynamicsCompressor();
+  sinir.threshold.value = -10; sinir.knee.value = 8; sinir.ratio.value = 12;
+  sinir.attack.value = 0.003; sinir.release.value = 0.25;
+  const kirpici = SES.ac.createWaveShaper();
+  kirpici.curve = kirpmaEgrisi();
+  kirpici.oversample = "4x";     // kirpmanin urettigi tizler katlanmasin
+  SES.ana.connect(sinir); sinir.connect(kirpici);
+  kirpici.connect(SES.ac.destination);
+  SES.cikis = kirpici;
   // Gitar govdesi: telin ciplak sesini kutuya sokar. Alt tepe govde
   // rezonansi, ust raf mizrabin sertligini yumusatir.
   const rez = SES.ac.createBiquadFilter();
@@ -1386,7 +1587,7 @@ function sesAc() {
   SES.govde = rez;
   // Kayit icin ayri bir cikis: video dosyasina ses de gomulsun.
   SES.kayitHedef = SES.ac.createMediaStreamDestination();
-  SES.ana.connect(SES.kayitHedef);
+  SES.cikis.connect(SES.kayitHedef);   // video da sinirlanmis sesi alsin
   yuvarlanmaKur();
 }
 
@@ -1398,16 +1599,36 @@ function yuvarlanmaKur() {
   const sr = SES.ac.sampleRate;
   const ab = SES.ac.createBuffer(1, Math.round(sr * 2), sr);
   const d = ab.getChannelData(0);
-  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  // Pembeye yakin gurultu: beyaz gurultu tiz agirlikliydi ve "şşşş" diye
+  // duyuluyordu. Basit tek kutuplu bir alcak geciren + hafif geri besleme
+  // tizi dusuruyor, kalan ses kadifemsi bir ugultu oluyor.
+  let alcak = 0;
+  for (let i = 0; i < d.length; i++) {
+    alcak += 0.06 * ((Math.random() * 2 - 1) - alcak);
+    d[i] = alcak * 3.2;
+  }
   const kaynak = SES.ac.createBufferSource();
   kaynak.buffer = ab; kaynak.loop = true;
+
+  // Iki katmanli: gurultu dokuyu, sinus GOVDEYI veriyor. Yalnizca gurultu
+  // "hava" gibi duyuluyordu; altina zayif bir sinus konunca ses bir yuzeyde
+  // kayan AGIR bir seye benziyor.
   const suzgec = SES.ac.createBiquadFilter();
-  suzgec.type = "bandpass"; suzgec.frequency.value = 400; suzgec.Q.value = 1.1;
+  suzgec.type = "bandpass"; suzgec.frequency.value = 400; suzgec.Q.value = 2.6;
+  const tavan = SES.ac.createBiquadFilter();           // kalan tizi de kes
+  tavan.type = "lowpass"; tavan.frequency.value = 2200; tavan.Q.value = 0.7;
+  const govde = SES.ac.createOscillator();
+  govde.type = "sine"; govde.frequency.value = 200;
+  const govdeKaz = SES.ac.createGain();
+  govdeKaz.gain.value = 0;
+
   const kazanc = SES.ac.createGain();
   kazanc.gain.value = 0;
-  kaynak.connect(suzgec); suzgec.connect(kazanc); kazanc.connect(SES.ana);
-  kaynak.start();
-  SES.yuvar = { suzgec, kazanc };
+  kaynak.connect(suzgec); suzgec.connect(tavan); tavan.connect(kazanc);
+  govde.connect(govdeKaz); govdeKaz.connect(kazanc);
+  kazanc.connect(SES.ana);
+  kaynak.start(); govde.start();
+  SES.yuvar = { suzgec, tavan, govde, govdeKaz, kazanc };
 }
 
 /** Her karede bir cagrilir: biriken temas bilgisini sese cevirir. */
@@ -1416,8 +1637,22 @@ function yuvarlanmaGuncelle() {
   const t = SES.ac.currentTime;
   const hedef = SES.acik && calisiyor ? SES.yuvarHedef : 0;
   // setTargetAtTime: ani sicrama yerine yumusak gecis, cizirti olmasin
-  SES.yuvar.kazanc.gain.setTargetAtTime(hedef * 0.5, t, 0.05);
-  SES.yuvar.suzgec.frequency.setTargetAtTime(220 + SES.yuvarHiz * C().surtunme, t, 0.06);
+  // 0.5 -> 0.18: sinus govde eklenince ayni kazancta ses UC KAT gurledi
+  // (RMS 0.045 -> 0.137 olculdu). Carpan buna gore dusuruldu.
+  SES.yuvar.kazanc.gain.setTargetAtTime(hedef * 0.18, t, 0.05);
+
+  /* Perdeyi HIZ degil YUKSEKLIK belirliyor: top tahtanin tepesindeyken ses
+     ince, indikce kalinlasiyor. Hiza bagliyken perde her sekmede zipliyordu
+     ve sonuc gurultuydu; yukseklige baglayinca makinenin tamami bastan sona
+     inen tek bir kayma sesi oluyor — dusus duyuluyor.
+     Hiz tamamen atilmadi, ust ucta kucuk bir parlaklik olarak duruyor. */
+  const derinlik = bilye ? kis(bilye.p.y / H, 0, 1) : 0.5;
+  const taban = C().surtunme;                      // bu calginin en tiz ucu
+  const f = taban * Math.pow(0.16, derinlik) * (1 + SES.yuvarHiz * 0.25);
+  SES.yuvar.suzgec.frequency.setTargetAtTime(kis(f, 90, 4000), t, 0.09);
+  SES.yuvar.govde.frequency.setTargetAtTime(kis(f * 0.5, 60, 1200), t, 0.09);
+  SES.yuvar.tavan.frequency.setTargetAtTime(kis(f * 2.4, 300, 6000), t, 0.12);
+  SES.yuvar.govdeKaz.gain.setTargetAtTime(0.34, t, 0.1);
   // Sifirlamak yerine sondurmek: top yuzeyde hafifce ziplarken temas bir
   // iki kare kopuyor, sert sifirlama sesi kesik kesik yapiyordu. Boylece
   // yuvarlanma surekli duyuluyor ama gercekten durunca ~100 ms'de bitiyor.
@@ -1516,6 +1751,83 @@ function cubukUret(f, kar, sr) {
   return cik;
 }
 
+/* Piyano: 8 harmonik, her biri kendi hiziyla sonuyor (tizler once). Kat
+ * numarasi n olan harmonik tam n*f'de degil, n*f*sqrt(1+B*n^2)'de —
+ * telin kalinligindan gelen inharmoniklik. */
+function piyanoUret(f, kar, sr) {
+  const uzunluk = Math.round(sr * kar.sure);
+  const cik = new Float32Array(uzunluk);
+  const kat = [];
+  for (let n = 1; n <= 8; n++) {
+    const fn = f * n * Math.sqrt(1 + kar.kirilma * n * n);
+    if (fn > sr * 0.45) break;                       // ortusme olmasin
+    kat.push({ f: fn, g: Math.pow(kar.parlak, n - 1) / n, s: 4.6 / (kar.sure / Math.sqrt(n)) });
+  }
+  let toplam = 0;
+  for (const k of kat) toplam += k.g;
+  for (let i = 0; i < uzunluk; i++) {
+    const t = i / sr;
+    let s = 0;
+    for (const k of kat) s += Math.sin(2 * Math.PI * k.f * t) * k.g * Math.exp(-t * k.s);
+    // Cekic: cok kisa, bandi genis bir darbe. Piyanonun "tak"i buradan.
+    s += (Math.random() * 2 - 1) * kar.cekic * Math.exp(-t * 420);
+    cik[i] = s / (toplam || 1);
+  }
+  return cik;
+}
+
+/* Can: inharmonik kat dizisi + kisa metal vurusu. En pest kat (temel) en
+ * yavas soner, tizler cabuk gider — canin "cinnn"i bu sirayla olusuyor. */
+function canUret(f, kar, sr) {
+  const uzunluk = Math.round(sr * kar.sure);
+  const cik = new Float32Array(uzunluk);
+  const katlar = CAN_KATLARI.filter(k => f * k < sr * 0.45);
+  for (let i = 0; i < uzunluk; i++) {
+    const t = i / sr;
+    let s = 0;
+    katlar.forEach((k, n) => {
+      s += Math.sin(2 * Math.PI * f * k * t) * Math.exp(-t * (1.4 + n * 1.9) / kar.sure * 3) / (n + 1.4);
+    });
+    s += (Math.random() * 2 - 1) * kar.vurus * Math.exp(-t * 260);
+    cik[i] = s;
+  }
+  return cik;
+}
+
+/* Muzik kutusu: temel + 3. ve 6. harmonik, hepsi hizli sonen; ustune celik
+ * disin tirnaga carpma sesi. */
+function kutuUret(f, kar, sr) {
+  const uzunluk = Math.round(sr * kar.sure);
+  const cik = new Float32Array(uzunluk);
+  for (let i = 0; i < uzunluk; i++) {
+    const t = i / sr;
+    const zarf = Math.exp(-t * 4.6 / kar.sure);
+    const temel = Math.sin(2 * Math.PI * f * t);
+    const u3 = Math.sin(2 * Math.PI * f * 3 * t) * kar.tiz * Math.exp(-t * 9);
+    const u6 = Math.sin(2 * Math.PI * f * 6 * t) * kar.tiz * 0.45 * Math.exp(-t * 22);
+    const tirnak = (Math.random() * 2 - 1) * kar.tirnak * Math.exp(-t * 900);
+    cik[i] = (temel + u3 + u6) * zarf + tirnak;
+  }
+  return cik;
+}
+
+/* Kalimba: neredeyse saf temel, uzerinde cabuk sonen bir oktav ve tahta
+ * govdenin kisa tiklamasi. */
+function kalimbaUret(f, kar, sr) {
+  const uzunluk = Math.round(sr * kar.sure);
+  const cik = new Float32Array(uzunluk);
+  let lp = 0;
+  for (let i = 0; i < uzunluk; i++) {
+    const t = i / sr;
+    const zarf = Math.exp(-t * 4.6 / kar.sure);
+    const temel = Math.sin(2 * Math.PI * f * t);
+    const okt = Math.sin(2 * Math.PI * f * 2 * t) * kar.ikinci * Math.exp(-t * 13);
+    lp += 0.35 * ((Math.random() * 2 - 1) - lp);          // tahta: pest tiklama
+    cik[i] = (temel + okt) * zarf + lp * kar.tahta * Math.exp(-t * 190);
+  }
+  return cik;
+}
+
 /* Secili calginin o nota+karakter icin vurus sesi. Ornek dosyasi yok;
  * her kombinasyon ilk calindiginda uretilip onbellege giriyor. */
 function vurusSesi(f, karAd) {
@@ -1546,13 +1858,23 @@ function notaCal(ad, guc = 1, tini = TEL_VARSAYILAN, gecikme = 0) {
   if (!SES.acik || !SES.ac) return;
   const n = NOTALAR.find(x => x.ad === ad) || NOTALAR[0];
   const kar = C().karakter[tini] ? tini : TEL_VARSAYILAN;
+  // Ayni anda calan ses sayisina tavan: kalabalik bir makinede onlarca
+  // uzun nota ust uste binince hem toplam seviye hem de cozucunun yuku
+  // patliyor, ses cizirtiya donuyordu. Tavana varilinca yeni nota
+  // dusurulmuyor (melodi bozulmasin), sadece seviyesi kisiliyor.
+  if (SES.aktif >= SES_TAVAN * 2) return;
+  const kalabalik = SES.aktif > SES_TAVAN
+    ? SES_TAVAN / SES.aktif : 1;
   const t = SES.ac.currentTime + gecikme;
   const s = SES.ac.createBufferSource();
   s.buffer = vurusSesi(n.f, kar);
   const g = SES.ac.createGain();
-  g.gain.value = Math.max(0.03, Math.min(1, guc)) * C().karakter[kar].guc * 0.8;
-  s.connect(g); g.connect(SES.govde || SES.ana);
+  g.gain.value = Math.max(0.03, Math.min(1, guc)) * C().karakter[kar].guc * 0.8
+                 * (C().seviye || 1) * kalabalik;
+  s.connect(g); g.connect(C().govde && SES.govde ? SES.govde : SES.ana);
   s.start(t);
+  SES.aktif++;
+  s.onended = () => { SES.aktif--; s.disconnect(); g.disconnect(); };
 }
 
 /* Bir temasi olaya cevirir. Normal hiz (c.vn) VURUSU, tegetsel hiz
@@ -2350,6 +2672,18 @@ function birak(e) {
     // Cok kucuk dikdortgen = bos alana tiklama, surukleme degil: secimi
     // temizlemis olur, yeni secim yapmaz.
     const kucuk = boy(cikar(kutuSecim.b, kutuSecim.a)) < 6;
+    if (!kucuk && kutuSecim.amac === "kopya") {
+      // ⧉ aracinda kutu: icindekiler SECILMEZ, KOPYALANIR. Kopyalar secili
+      // gelir; kullanici surukleyip yerine koyar.
+      const k = kutudakiParcalar(kutuSecim.a, kutuSecim.b);
+      kutuSecim = null;
+      if (!k.length) { ipucGoster(T("cogaltYok")); return; }
+      // Kopyalar imlece BAGLANMIYOR: burasi pointerup, dugme zaten birakildi;
+      // fareye baglamak tusa basmadan surunen bir yigin birakirdi. Kopyalar
+      // 30 px kaymis ve secili duruyor — ustune basip surukleyerek tasiniyor.
+      cogaltSecim(k);
+      return;
+    }
     if (!kucuk) {
       secimYap(kutuSecim.ekle
         ? [...secimler, ...bulunan.filter(p => !seciliMi(p))]
@@ -2723,7 +3057,12 @@ function kutudakiParcalar(a, b) {
 }
 
 function yakala(e) {
-  if (e && e.pointerId != null && cv.setPointerCapture) cv.setPointerCapture(e.pointerId);
+  // Yakalama iyilestirme, sart degil: isaretci arada birakildiysa tarayici
+  // atiyor. Atmasina izin verirsek islemi BASLATAN kod yarida kesiliyor
+  // (ipucu cikmiyor, kutu cizilmiyor) — oysa islem zaten kurulmus durumda.
+  try {
+    if (e && e.pointerId != null && cv.setPointerCapture) cv.setPointerCapture(e.pointerId);
+  } catch (h) { /* yakalayamadik; surukleme tuvalin icinde yine calisir */ }
 }
 
 function tasimaSurdur(nok) {
@@ -2855,7 +3194,11 @@ function tutamaklar() {
 
   if (kutuSecim) {
     const { a, b } = kutuSecim;
-    ctx.strokeStyle = "#ffd479"; ctx.fillStyle = "#ffd4791f";
+    // Kopyalama kutusu yesil: ayni hareket iki farkli sey yapiyor (secmek /
+    // kopyalamak), hangisinde oldugun birakmadan once gorunmeli.
+    const kop = kutuSecim.amac === "kopya";
+    ctx.strokeStyle = kop ? "#7ddf9a" : "#ffd479";
+    ctx.fillStyle = kop ? "#7ddf9a1f" : "#ffd4791f";
     ctx.lineWidth = 1.5; ctx.setLineDash([4, 4]);
     ctx.beginPath();
     ctx.rect(Math.min(a.x, b.x), Math.min(a.y, b.y),
@@ -2896,7 +3239,7 @@ const COGALT_KAYMA = 30;   // kopya orijinalin ustune binmesin diye kaydirma (px
 /** Parcanin kopyasi: nokta alanlari (p/a/b) kaydirilir, gerisi aynen gecer.
  *  Tasimadaki gibi tur ISMEN bilinmiyor — hangi alanlarin nokta oldugu
  *  `noktalari()` ile bulunuyor, yani yeni parca turu ayrica kod istemiyor. */
-function parcaKopyala(p, dx, dy) {
+function parcaKopyala(p, dx, dy, kissiz = false) {
   const k = {};
   for (const ad of Object.keys(p)) {
     const d = p[ad];
@@ -2904,7 +3247,10 @@ function parcaKopyala(p, dx, dy) {
   }
   const alanlar = noktalari(k);
   let sx = dx, sy = dy;                        // kopya da tahtanin icinde kalsin
-  for (const ad of alanlar) {
+  // Yigin kopyalarken kisitlama PARCA BASINA degil topluca yapiliyor
+  // (cogaltSecim onceden hesaplar), yoksa kenardaki parca kayar ve
+  // aralarindaki mesafe bozulur — merdiven merdiven olmaktan cikar.
+  if (!kissiz) for (const ad of alanlar) {
     sx = kis(sx, -k[ad].x + 4, W - 4 - k[ad].x);
     sy = kis(sy, -k[ad].y + 4, H - 4 - k[ad].y);
   }
@@ -2912,10 +3258,17 @@ function parcaKopyala(p, dx, dy) {
   return k;
 }
 
-/** ⧉ aracinda: tiklanan parcayi cogaltip kopyayi imlece baglar. */
+/** ⧉ aracinda: tiklanan parcayi cogaltip kopyayi imlece baglar. Bos alanda
+ *  baslarsa tiklama degil SECEREK KOPYALAMA olur: kutu cizilir, birakilinca
+ *  icindekilerin tamami birlikte kopyalanir (bkz. cogaltSecim). */
 function cogaltNoktada(nok, e) {
   const i = parcaBul(nok);
-  if (i < 0) { ipucGoster(T("cogaltYok")); return; }
+  if (i < 0) {
+    kutuSecim = { a: nok, b: nok, ekle: false, amac: "kopya" };
+    yakala(e);
+    ipucGoster(T("kopyaKutuIpuc"));
+    return;
+  }
   const k = cogalt(parcalar[i]);
   if (!k) return;
   // Kopya dogrudan surukleniyor: birakilan yer kullanicinin sectigi yer olur.
@@ -2934,6 +3287,36 @@ function cogalt(p) {
   notaCal(k.nota, 0.5, TINI[k.tur] || TEL_VARSAYILAN);
   ipucGoster(T("cogaltIpuc", pT(k.tur, "ad")));
   return k;
+}
+
+/** Secili parcalarin TAMAMINI, aralarindaki mesafeyi ve acilari bozmadan
+ *  kopyalar. Kopyalar yeni secim olur: ok tuslariyla ince ayar, Q/E ile
+ *  dondurme ve topluca surukleme dogrudan calisir.
+ *
+ *  Stok tur tur bakiliyor ve YETMEZSE hicbiri kopyalanmiyor: yarim kopyalanan
+ *  bir merdiven sessizce bozuk bir yigin birakir, oyuncu da neyin eksik
+ *  oldugunu goremez. */
+function cogaltSecim(liste = secimler) {
+  if (!liste.length) { ipucGoster(T("cogaltYok")); return null; }
+  const say = {};
+  for (const p of liste) say[p.tur] = (say[p.tur] || 0) + 1;
+  for (const tur of Object.keys(say)) {
+    if (stokKalan(tur) < say[tur]) { ipucGoster(T("stokBitti")); return null; }
+  }
+  // Ortak kayma: once TOPLU kisitlanir, sonra herkese ayni kayma uygulanir.
+  let sx = COGALT_KAYMA, sy = COGALT_KAYMA;
+  for (const p of liste) for (const ad of noktalari(p)) {
+    sx = kis(sx, -p[ad].x + 4, W - 4 - p[ad].x);
+    sy = kis(sy, -p[ad].y + 4, H - 4 - p[ad].y);
+  }
+  const kopyalar = liste.map(p => parcaKopyala(p, sx, sy, true));
+  parcalar.push(...kopyalar);
+  kaydet();
+  secimYap(kopyalar);
+  paletCiz();
+  notaCal(kopyalar[0].nota, 0.5, TINI[kopyalar[0].tur] || TEL_VARSAYILAN);
+  ipucGoster(T("cogaltCoklu", kopyalar.length));
+  return kopyalar;
 }
 
 /* ---------- nota menusu (sag tik) ---------- */
@@ -3032,6 +3415,142 @@ function yukle(i) {
     const d = s ? JSON.parse(s) : null;
     return Array.isArray(d) ? d.filter(p => PARCALAR[p.tur]) : null;
   } catch (e) { return null; }
+}
+
+/* ---------- kutuphane: adiyla kaydedilen makineler ---------- *
+ *
+ *  Bolum kaydi (yukarisi) OTOMATIKTIR ve bolum basina TEKTIR: oyuncu ne
+ *  kurduysa o durur, ustune kurunca eskisi gider. Kutuphane bundan ayri bir
+ *  sey: oyuncunun ADIYLA sakladigi, istedigi zaman geri cagirdigi duzenler.
+ *  Ikisini birlestirmek "makinem nerede" sorusunu doguruyordu.
+ *
+ *  Bolum ID'si de saklaniyor: makine hangi bolumde kurulduysa orada aciliyor,
+ *  yoksa stok sinirli bir bolume 40 parcalik bir duzen dusuyor.
+ * ---------------------------------------------------------------- */
+
+const ARSIV_ANAHTAR = "rube-arsiv";
+const ARSIV_AZAMI = 40;            // kayit sayisi tavani (localStorage dolmasin)
+
+function arsivOku() {
+  try {
+    const d = JSON.parse(localStorage.getItem(ARSIV_ANAHTAR) || "[]");
+    return Array.isArray(d) ? d.filter(k => k && typeof k.ad === "string") : [];
+  } catch (e) { return []; }
+}
+function arsivYaz(liste) {
+  try { localStorage.setItem(ARSIV_ANAHTAR, JSON.stringify(liste.slice(0, ARSIV_AZAMI))); }
+  catch (e) { ipucGoster(T("arsivDolu")); }
+}
+
+/** Tahtadaki makineyi adiyla sakla. Ayni ad varsa uzerine yazar — ayri bir
+ *  "uzerine yaz?" sorusu yok, ipucu ne olduğunu soyluyor. */
+function arsivKaydet(ad) {
+  ad = String(ad || "").trim().slice(0, 40);
+  if (!ad) { ipucGoster(T("arsivAdSor")); return false; }
+  if (!parcalar.length) { ipucGoster(T("arsivBosMakine")); return false; }
+  const liste = arsivOku();
+  const eski = liste.findIndex(k => k.ad === ad);
+  const kayit = { ad, bolum: BOLUMLER[bolumNo].id, zaman: Date.now(),
+                  parcalar: JSON.parse(JSON.stringify(parcalar)) };
+  if (eski >= 0) liste[eski] = kayit; else liste.unshift(kayit);
+  arsivYaz(liste);
+  ipucGoster(T(eski >= 0 ? "arsivUzerineYazildi" : "arsivKaydedildi", ad));
+  return true;
+}
+
+/** Kaydi tahtaya getir. Gelen veri KENDI verimiz ama yine de `makineSuz`den
+ *  geciyor: localStorage elle duzenlenebilir ve tek bir NaN fizigi kilitler.
+ *  Paylasma linkiyle ayni suzgec — iki ayri dogrulama yolu tutmuyoruz. */
+function arsivYukle(ad) {
+  const k = arsivOku().find(x => x.ad === ad);
+  if (!k) { ipucGoster(T("arsivYok")); return; }
+  const temiz = makineSuz(k.parcalar);
+  if (!temiz || !temiz.length) { ipucGoster(T("paylasBozuk")); return; }
+  const i = BOLUMLER.findIndex(b => b.id === k.bolum);
+  if (misafir) misafirKapat(false);
+  durdur();
+  bolumKur(i >= 0 ? i : bolumNo);
+  parcalar = temiz;
+  parcalar.forEach((p, n) => { if (!p.nota) notaAta(p, n); });
+  secimYap([]);
+  kaydet(); paletCiz(); ustGizle();
+  ipucGoster(T("arsivYuklendi", k.ad));
+}
+
+function arsivSilKayit(ad) {
+  arsivYaz(arsivOku().filter(k => k.ad !== ad));
+  ipucGoster(T("arsivSilindi", ad));
+  arsivCiz();
+}
+
+function arsivAc() {
+  document.getElementById("arsivPanel").style.display = "block";
+  arsivCiz();
+}
+function arsivKapat() {
+  document.getElementById("arsivPanel").style.display = "none";
+}
+
+function arsivCiz() {
+  const p = document.getElementById("arsivPanel");
+  if (p.style.display !== "block") return;
+  p.innerHTML = "";
+  const bas = document.createElement("h3");
+  bas.textContent = T("arsivBaslik");
+  p.appendChild(bas);
+
+  const satir = document.createElement("div");
+  satir.className = "arsivSatir";
+  const giris = document.createElement("input");
+  giris.placeholder = T("arsivAdYer");
+  giris.maxLength = 40;
+  const kaydetD = document.createElement("button");
+  dugmeYaz(kaydetD, T("arsivKaydetBtn"), "💾");
+  const kaydetIsi = () => { if (arsivKaydet(giris.value)) { giris.value = ""; arsivCiz(); } };
+  kaydetD.onclick = kaydetIsi;
+  giris.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); kaydetIsi(); } };
+  satir.appendChild(giris); satir.appendChild(kaydetD);
+  p.appendChild(satir);
+
+  const liste = document.createElement("div");
+  liste.className = "arsivListe";
+  const kayitlar = arsivOku();
+  if (!kayitlar.length) {
+    const bos = document.createElement("div");
+    bos.className = "arsivBos";
+    bos.textContent = T("arsivBosListe");
+    liste.appendChild(bos);
+  }
+  for (const k of kayitlar) {
+    const s = document.createElement("div");
+    s.className = "arsivKayit";
+    const ad = document.createElement("span");
+    ad.className = "ad";
+    ad.textContent = k.ad;
+    const bilgi = document.createElement("span");
+    bilgi.className = "bilgi";
+    bilgi.textContent = (k.parcalar ? k.parcalar.length : 0) + "⧉";
+    const ac = document.createElement("button");
+    dugmeYaz(ac, T("arsivAcBtn"), "📂");
+    ac.onclick = () => { arsivYukle(k.ad); arsivKapat(); };
+    const sil = document.createElement("button");
+    sil.className = "tehlike";
+    dugmeYaz(sil, "", "🗑");
+    sil.title = T("arsivSilBtn");
+    sil.onclick = () => arsivSilKayit(k.ad);
+    s.appendChild(ad); s.appendChild(bilgi); s.appendChild(ac); s.appendChild(sil);
+    liste.appendChild(s);
+  }
+  p.appendChild(liste);
+
+  const alt = document.createElement("div");
+  alt.className = "menuAlt";
+  const kapat = document.createElement("button");
+  dugmeYaz(kapat, T("arsivKapat"), "✕");   // ikon verilmezse ilk HARF ikon oluyor
+  kapat.onclick = arsivKapat;
+  alt.appendChild(kapat);
+  p.appendChild(alt);
+  giris.focus();
 }
 
 /* ---------- paylasma linki ---------- *
@@ -3368,9 +3887,50 @@ document.getElementById("ucBtn").onclick = () => {
   arayuzuTazele();
 };
 document.getElementById("sifirla").onclick = () => { durdur(); ustGizle(); };
-document.getElementById("temizle").onclick = () => {
-  parcalar = []; kaydet(); durdur(); paletCiz(); ustGizle();
-};
+/* Tahtayi bosaltmak geri alinamaz bir isti ve tek tiklama yetiyordu. Simdi
+   iki kapi var: dugme once SORUYOR (4 saniye icinde ikinci tiklama onaylar),
+   silinen makine de `sonSilinen`de duruyor — Ctrl+Z geri getiriyor.
+   Modal kullanilmadi: parmakta ve kayit sirasinda modal en kotu secenek,
+   ustelik oyunun hicbir yerinde modal yok. */
+let temizleSoruyor = null;
+let sonSilinen = null;
+
+function temizleTazele() {
+  const b = document.getElementById("temizle");
+  dugmeYaz(b, T(temizleSoruyor ? "temizleSor" : "temizle"),
+           temizleSoruyor ? "⚠️" : "🧹");
+  b.classList.toggle("soruyor", !!temizleSoruyor);
+}
+
+function temizleTikla() {
+  if (!temizleSoruyor) {
+    if (!parcalar.length) return;               // bos tahtada soru sormanin anlami yok
+    temizleSoruyor = setTimeout(() => { temizleSoruyor = null; temizleTazele(); }, 4000);
+    temizleTazele();
+    return;
+  }
+  clearTimeout(temizleSoruyor); temizleSoruyor = null;
+  sonSilinen = { bolum: bolumNo, parcalar };
+  const n = parcalar.length;
+  parcalar = []; secimYap([]);
+  kaydet(); durdur(); paletCiz(); ustGizle(); temizleTazele();
+  ipucGoster(T("temizleOldu", n));
+}
+
+function temizleGeriAl() {
+  if (!sonSilinen || !sonSilinen.parcalar.length) return;
+  const g = sonSilinen;
+  sonSilinen = null;
+  if (misafir) misafirKapat(false);
+  if (g.bolum !== bolumNo) bolumKur(g.bolum);
+  parcalar = g.parcalar;
+  kaydet(); paletCiz();
+  ipucGoster(T("temizleGeri", parcalar.length));
+}
+
+document.getElementById("temizle").onclick = temizleTikla;
+document.getElementById("kaydetBtn").onclick = arsivAc;
+document.getElementById("acBtn").onclick = arsivAc;
 document.getElementById("ustBtn").onclick = () => {
   const gec = kazanildi && bolumNo < BOLUMLER.length - 1;
   durdur(); ustGizle();
@@ -3462,6 +4022,27 @@ document.addEventListener("keydown", e => {
     dondurSecim(yon * (e.shiftKey ? 15 : 5) * Math.PI / 180);
     kaydet();
   }
+  // Ctrl/Cmd + D: secili yigini oldugu gibi cogalt. Ctrl+C / Ctrl+V de ayni
+  // isi yapiyor — arada pano yok, kopyalanan sey SECIM. Ayri bir pano tutmak
+  // yanlis beklenti kurardi: baska sekmeye yapistirilamaz.
+  const kopyaTusu = (e.ctrlKey || e.metaKey) &&
+    (e.key === "d" || e.key === "D" || e.key === "v" || e.key === "V");
+  if (kopyaTusu && secimler.length && !calisiyor) {
+    e.preventDefault();
+    cogaltSecim();
+  }
+  if ((e.ctrlKey || e.metaKey) && (e.key === "c" || e.key === "C") && secimler.length) {
+    e.preventDefault();
+    ipucGoster(T("kopyaHazir", secimler.length));
+  }
+  // Ctrl/Cmd + Z: tahtayi bosaltmayi geri alir. Tek adimlik — geri alinacak
+  // tek yikici islem bu; parca koyma/silme zaten tek tiklamayla telafi
+  // edilebiliyor, onlar icin gecmis tutmak kodun tamamini degistirirdi.
+  if ((e.ctrlKey || e.metaKey) && (e.key === "z" || e.key === "Z")) {
+    e.preventDefault();
+    temizleGeriAl();
+  }
+  if (e.key === "Escape") arsivKapat();
   // Delete/Backspace secili parcalari siler. Kutu secimi olmadan bunun
   // karsiligi yoktu: 20 parcayi tek tek silme araciyla tiklamak gerekiyordu.
   if ((e.key === "Delete" || e.key === "Backspace") && secimler.length) {

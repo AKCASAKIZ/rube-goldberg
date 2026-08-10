@@ -593,6 +593,122 @@ const bak = (ad, kosul, ek = "") => {
   bak("parmaklar kalkınca çimdik bitiyor", g.dokunmalar.size === 0);
   g.GORUS.olcek = 1;
 
+  /* ---- 6. bolum: secerek kopyalama ---- *
+     ⧉ aracinda bos alanda surukleme SECMEZ, KOPYALAR. Olculen sey: kutunun
+     icindekilerin tamaminin geldigi, aralarindaki mesafenin bozulmadigi ve
+     stok yetmiyorsa hicbirinin kopyalanmadigi. */
+  console.log("\n--- seçerek kopyalama ---");
+
+  const fare = (x, y) => ({ pointerId: 9, pointerType: "mouse",
+                            clientX: x, clientY: y, button: 0 });
+  const kutuCiz = (x1, y1, x2, y2) => {
+    g.eylemBasla(g.fareNok(fare(x1, y1)), fare(x1, y1));
+    g.birak(fare(x2, y2));
+  };
+  const domino = (x, y) => g.parcalar.push(
+    { tur: "domino", p: g.v(x, y), boy: 54, aci: 0, aciHiz: 0 });
+
+  // Onceki cimdik testi gorusu kaydirdi; birakilirsa fare koordinatlari
+  // dunya koordinatlarina denk gelmez ve kutu bos cikar.
+  g.GORUS.x = 0; g.GORUS.y = 0; g.GORUS.olcek = 1;
+
+  g.bolumKur(SERBEST);
+  g.parcalar = [];
+  g.secimYap([]);
+  g.secili = "cogalt";
+  [300, 360, 420].forEach(x => domino(x, 600));
+  kutuCiz(280, 560, 440, 640);
+  bak("kutu içindeki 3 parça kopyalandı", g.parcalar.length === 6,
+    g.parcalar.length + " parça");
+  bak("kopyalar seçili geliyor", g.secimler.length === 3,
+    g.secimler.length + " seçili");
+
+  // Aradaki mesafe korunmali: her parca ayri kisilirsa yigin dagilir
+  const kop = g.secimler.slice().sort((a, b) => a.p.x - b.p.x);
+  bak("kopyalar arası mesafe korundu",
+    Math.round(kop[1].p.x - kop[0].p.x) === 60 &&
+    Math.round(kop[2].p.x - kop[1].p.x) === 60,
+    kop.map(p => Math.round(p.p.x)).join(","));
+  bak("kopyalar kaymış (üst üste binmiyor)",
+    kop[0].p.x > 300 && kop[0].p.y > 600, `${kop[0].p.x},${kop[0].p.y}`);
+
+  // Bos alana kutu: kopyalanacak bir sey yok
+  g.parcalar = [];
+  g.secimYap([]);
+  kutuCiz(100, 100, 200, 200);
+  bak("boş kutu parça üretmiyor", g.parcalar.length === 0,
+    g.parcalar.length + " parça");
+
+  // Ctrl+D secimi cogaltiyor
+  g.parcalar = [];
+  domino(300, 600); domino(360, 600);
+  g.secimYap(g.parcalar.slice());
+  g.cogaltSecim();
+  bak("Ctrl+D seçimi çoğaltıyor", g.parcalar.length === 4,
+    g.parcalar.length + " parça");
+
+  // Stok yetmezse HICBIRI kopyalanmiyor (yarim yigin birakmak yasak)
+  const stoklu = g.BOLUMLER.findIndex(b => b.stok && b.stok.domino > 0 &&
+                                           b.stok.domino < 99);
+  if (stoklu >= 0) {
+    g.bolumKur(stoklu);
+    g.parcalar = [];
+    const kota = g.BOLUMLER[stoklu].stok.domino;
+    for (let i = 0; i < kota; i++) domino(200 + i * 40, 600);
+    g.secimYap(g.parcalar.slice());
+    g.cogaltSecim();
+    bak("stok yetmeyince hiçbiri kopyalanmıyor", g.parcalar.length === kota,
+      `kota=${kota}, parça=${g.parcalar.length}`);
+  }
+
+  /* ---- 7. bolum: kutuphane + tahtayi bosaltma ---- *
+     Olculen sey: adiyla kaydedilen makine geri geliyor mu, hangi BOLUMDE
+     aciliyor, ve bosaltma iki adima bolunup geri alinabiliyor mu. */
+  console.log("\n--- kütüphane ve boşaltma ---");
+
+  g.localStorage.removeItem("rube-arsiv");
+  g.bolumKur(SERBEST);
+  g.parcalar = [];
+  g.secimYap([]);
+  domino(300, 600); domino(360, 600);
+
+  bak("boş adla kaydetmiyor", g.arsivKaydet("   ") === false && g.arsivOku().length === 0);
+  bak("adıyla kaydediyor", g.arsivKaydet("merdiven") === true && g.arsivOku().length === 1);
+  bak("kayıt bölümü de saklıyor", g.arsivOku()[0].bolum === g.BOLUMLER[SERBEST].id,
+    g.arsivOku()[0].bolum);
+
+  // Ayni ad = uzerine yazma, ikinci kayit acilmiyor
+  domino(420, 600);
+  g.arsivKaydet("merdiven");
+  bak("aynı ad üzerine yazıyor",
+    g.arsivOku().length === 1 && g.arsivOku()[0].parcalar.length === 3,
+    g.arsivOku().length + " kayıt / " + g.arsivOku()[0].parcalar.length + " parça");
+
+  // Baska bolume gecip yukleyince KAYITTAKI bolume donuyor
+  g.bolumKur(0);
+  g.parcalar = [];
+  g.arsivYukle("merdiven");
+  bak("yükleyince kendi bölümünde açılıyor", g.bolumNo === SERBEST, "bölüm=" + g.bolumNo);
+  bak("yüklenen makine tahtada", g.parcalar.length === 3, g.parcalar.length + " parça");
+
+  // Bos tahta kaydedilmiyor
+  g.parcalar = [];
+  bak("boş tahta kaydedilmiyor", g.arsivKaydet("bos") === false && g.arsivOku().length === 1);
+
+  g.arsivSilKayit("merdiven");
+  bak("kayıt silinebiliyor", g.arsivOku().length === 0);
+
+  // Bosaltma: ilk tiklama SORAR, ikincisi siler
+  g.parcalar = [];
+  domino(300, 600); domino(360, 600);
+  g.temizleTikla();
+  bak("ilk tıklama silmiyor, soruyor", g.parcalar.length === 2,
+    g.parcalar.length + " parça");
+  g.temizleTikla();
+  bak("ikinci tıklama boşaltıyor", g.parcalar.length === 0);
+  g.temizleGeriAl();
+  bak("Ctrl+Z geri getiriyor", g.parcalar.length === 2, g.parcalar.length + " parça");
+
   console.log(hata ? `\n${hata} test başarısız` : "\nhepsi geçti");
   process.exit(hata ? 1 : 0);
 })();
