@@ -22,20 +22,23 @@
      birakmak icin. Fare uzerine gelince acilip tahtanin USTUNE biniyorlar:
      boylece menu genislerken tuval yeniden olceklenmiyor, oyun ziplamiyor.
      Dar ekranda serit mantigi kapaniyor, paneller tahtanin altina iniyor. */
-  /* Seritler artik AYRI SUTUN degil, tahtanin USTUNE binen katman (karar
-     10-08-2026). Eskiden izgara `serit 1fr serit` idi ve yan sutunlar her
-     ekranda 144 px yiyordu; ustelik tahta orta sutunda ORTALANDIGI icin tahta
-     daraldikca menuyle tahta arasi aciliyor, menuler kayiyormus gibi
-     gorunuyordu. Simdi tahta tum genisligi aliyor, seritler onun kenarina
-     `--tahtaW` uzerinden yapisiyor (tahtaPayiTazele olcup yaziyor). */
-  .duzen{position:relative}
+  /* Seritler tahtanin YANINDA, kenarina YAPISIK duruyor (karar 10-08-2026).
+     Once `serit 1fr serit` idi: orta sutun kalan genisligin tamamiydi ve tahta
+     onun icinde ORTALANIYORDU, yani tahta daraldikca menuyle tahta arasi
+     aciliyor, menuler kayiyormus gibi gorunuyordu. Bir ara tahtanin USTUNE
+     binen katman denendi, begenilmedi.
+     Simdi orta sutun tahtanin TAM ENI (--tahtaW, betik hesapliyor) ve izgara
+     ortalaniyor - bosluk hic acilmiyor, menu de tahtayi ortmuyor.
+     !! --tahtaW .wrap OLCULEREK bulunamaz: sutunun eni ona bagli olunca
+        dongu olusur. tahtaPayiTazele onu paydan ve kalan genislikten
+        HESAPLIYOR. */
+  .duzen{display:grid;gap:12px;align-items:start;justify-content:center;
+         grid-template-columns:var(--serit) var(--tahtaW, 900px) var(--serit)}
   /* Serit genisligi renk izgarasina gore: 2 daire (24) + bosluk (6) = 54,
      bar dolgusu 2x8 -> 70. 72 verildi ki kirpilmasin. Daraltirsan renkler
      seride sigmaz ve sessizce kesilir. */
   :root{--serit:72px;--acik:212px}
-  .sutun{position:absolute;top:0;width:var(--serit);height:0;z-index:20}
-  .sol{left:calc(50% - var(--tahtaW, 900px) / 2)}
-  .sag{right:calc(50% - var(--tahtaW, 900px) / 2)}
+  .sutun{position:relative;min-width:0;height:0}
   /* Serit KIRPILMAZ. Bir sure `max-height` + `overflow:auto` vardi ve
      kaydirma cubugu da gizliydi: sigmayan dugmeler (Tasi/Cogalt/Sil) hem
      kesiliyor hem de kesildigine dair hicbir iz birakmiyordu - dugmeler
@@ -116,7 +119,7 @@
   }
 
   @media (max-width:1120px) and (orientation:portrait){
-    .duzen{position:static}
+    .duzen{grid-template-columns:minmax(0,1fr)}
     .sutun{height:auto}
     .kutu{position:static;width:auto;flex-direction:row;flex-wrap:wrap}
     .kutu>div{flex:1 1 320px}
@@ -260,7 +263,7 @@
            betik cizmeden onceki ilk boyama icin yedek deger - eskiden SABIT
            190'di ve masaustu basligina gore tahmin edilmisti, yani tahta her
            yerde oldugundan kucuk kaliyordu. */
-        max-width:calc((100dvh - var(--pay, 190px)) * 1000 / 640)}
+        width:100%}
   /* Alan rengi secicisi: renk daireleri */
   /* Sabit 2 sutun: serit acilirken yeniden dizilseydi renkler imlecin
      altindan kayardi. Ayrica serit halinde 5 satir yer kaplamiyor. */
@@ -998,6 +1001,7 @@ const SOZLUK = {
       calgidavul: "Drums", calgigitar: "Guitar", calgimarimba: "Marimba",
       calgipiyano: "Piano", calgican: "Bells", calgikutu: "Music box", calgikalimba: "Kalimba",
       kaydirIpuc: "Drag the empty board to pan; the mouse wheel zooms.",
+      kaydirYok: "Zoom in first — at 100% the whole board already fits.",
     },
     parca: {
       ramp: { ad: "Ramp", ipuc: "<b>Drag</b> on the canvas — the line you draw becomes a ramp. A short click drops a flat ramp." },
@@ -1105,6 +1109,7 @@ const SOZLUK = {
       calgidavul: "Schlagzeug", calgigitar: "Gitarre", calgimarimba: "Marimba",
       calgipiyano: "Klavier", calgican: "Glocken", calgikutu: "Spieluhr", calgikalimba: "Kalimba",
       kaydirIpuc: "Zieh das leere Brett zum Verschieben; das Mausrad zoomt.",
+      kaydirYok: "Zoom zuerst hinein — bei 100% passt das ganze Brett schon.",
     },
     parca: {
       ramp: { ad: "Rampe", ipuc: "Auf die Fläche <b>ziehen</b> — die gezogene Linie wird zur Rampe. Ein kurzer Klick setzt eine flache Rampe." },
@@ -1211,6 +1216,7 @@ const SOZLUK = {
       calgidavul: "Batterie", calgigitar: "Guitare", calgimarimba: "Marimba",
       calgipiyano: "Piano", calgican: "Cloches", calgikutu: "Boîte à musique", calgikalimba: "Kalimba",
       kaydirIpuc: "Fais glisser le plateau vide pour le déplacer ; la molette zoome.",
+      kaydirYok: "Zoome d'abord — à 100% le plateau entier tient déjà.",
     },
     parca: {
       ramp: { ad: "Rampe", ipuc: "<b>Fais glisser</b> sur la zone — la ligne tracée devient une rampe. Un clic bref pose une rampe plate." },
@@ -1350,6 +1356,7 @@ const YEDEK_UI = {
   calgidavul: "Davul", calgigitar: "Gitar", calgimarimba: "Marimba",
   calgipiyano: "Piyano", calgican: "Çan", calgikutu: "Müzik kutusu", calgikalimba: "Kalimba",
   kaydirIpuc: "Boş tahtayı sürükleyerek kaydır; tekerlek yakınlaştırır.",
+      kaydirYok: "Önce yakınlaştır — %100'de tahtanın tamamı zaten görünüyor.",
 };
 
 function dilSec(d) {
@@ -2684,11 +2691,30 @@ function eylemBasla(p, e) {
   yeniParca(PARCALAR[secili].olustur(p, p));
 }
 
+/** Gorus kaydirmayi baslatir. Tek giris noktasi: hem orta tus/Shift
+ *  kestirmesi hem Tasi aracindaki bos alan yolu buraya dusuyor. */
+function kaydirmaBasla(nok, e) {
+  if (GORUS.olcek <= 1) { ipucGoster(T("kaydirYok")); return false; }
+  kaydirma = { son: nok };
+  yakala(e);
+  return true;
+}
+
 cv.addEventListener("pointerdown", e => {
   if (e.pointerType === "touch") { dokunBasla(e); return; }
   sesAc();                       // ilk tiklamada ses motoru uyanir
   notaMenuKapat();
   if (e.button === 2) return;    // sag tik nota menusu; asagida
+  // !! KAYDIRMA ARACA DA KOSUYA DA BAGLI DEGIL. Eskiden yalnizca Tasi
+  //    aracindaki bos-alan dalinda vardi, yani elinde Rampa varken
+  //    Shift+surukleme kaydirmak yerine PARCA KOYUYORDU; ustelik asagidaki
+  //    `if (calisiyor) return;` yuzunden makine kosarken hic kaydirilamiyordu.
+  //    Uc kapinin ucu de sessizce kapaliydi - "pan calismiyor" bundandi.
+  if (e.button === 1 || e.shiftKey) {
+    e.preventDefault();          // orta tus tarayicinin oto-kaydirmasini acar
+    kaydirmaBasla(fareNok(e), e);
+    return;
+  }
   if (calisiyor) return;
   eylemBasla(fareNok(e), e);
 });
@@ -3064,11 +3090,19 @@ function tahtaPayiTazele() {
   const pay = Math.max(0, Math.round(ust + alt + 10));
   const kok = document.documentElement;
   kok.style.setProperty("--pay", pay + "px");
-  // Seritler tahtanin kenarina --tahtaW uzerinden yapisiyor (CSS: .sol/.sag).
-  // Pay yazildiktan SONRA olculuyor: pay tahtanin enini belirliyor, ters sirada
-  // bir onceki cizimin eni yazilir ve seritler bir kare geride kalir.
+
+  // Tahtanin eni HESAPLANIYOR, olculmuyor: orta izgara sutununun eni --tahtaW
+  // oldugu icin .wrap'i olcup geri yazmak dongu kurar (sutun tahtaya, tahta
+  // sutuna bagli olurdu). Iki sinirin kucugu aliniyor:
+  //   - yukseklikten kalan  : (ekran - pay) x 1000/640  (en-boy orani sabit)
+  //   - genislikten kalan   : duzenin eni - iki serit - iki bosluk
+  const duz = document.querySelector(".duzen");
+  const serit = parseFloat(getComputedStyle(kok).getPropertyValue("--serit")) || 72;
+  const yigin = getComputedStyle(duz).gridTemplateColumns.split(" ").length < 3;
+  const yatay = yigin ? duz.clientWidth : duz.clientWidth - 2 * serit - 24;
+  const dikey = (innerHeight - pay) * 1000 / 640;
   kok.style.setProperty("--tahtaW",
-    Math.round(sar.getBoundingClientRect().width) + "px");
+    Math.max(240, Math.round(Math.min(yatay, dikey))) + "px");
 }
 
 addEventListener("resize", tahtaPayiTazele);
@@ -3118,9 +3152,9 @@ function tasimaBasla(nok, e) {
   const i = parcaBul(nok);
   if (i < 0) {                               // bos alan
     if (kaydirTusu) {
-      kaydirma = { son: nok };
-      yakala(e);
-      ipucGoster(T(GORUS.olcek > 1 ? "kaydirIpuc" : "tasiYok"));
+      // Ayni isi pointerdown kestirmesi de yapiyor; ikisi de kaydirmaBasla'ya
+      // dusuyor ki kural tek yerde dursun.
+      if (kaydirmaBasla(nok, e)) ipucGoster(T("kaydirIpuc"));
       return;
     }
     // Ctrl basili degilse eski secim dusuyor - Windows'ta bos alana tiklamak

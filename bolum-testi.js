@@ -27,7 +27,8 @@ function motorKur() {
   const kaynak = fs.readFileSync(path.join(KOK, "index.html"), "utf8")
     .match(/<script>([\s\S]*)<\/script>/)[1];
   const yut = new Proxy(function () {}, {
-    get: (t, k) => (k === "width" ? 1000 : k === "height" ? 640
+    get: (t, k) => (k === "width" || k === "clientWidth" ? 1000
+      : k === "height" || k === "clientHeight" ? 640
       : k === "left" || k === "top" ? 0 : k === "length" ? 0 : yut),
     set: () => true, apply: () => yut, has: () => true,
   });
@@ -43,6 +44,9 @@ function motorKur() {
     performance: { now: () => 0 },
     requestAnimationFrame: () => 0, setTimeout: () => {}, clearTimeout: () => {},
     innerWidth: 1400, innerHeight: 900, addEventListener: () => {},
+    getComputedStyle: () => ({ position: "absolute",
+      gridTemplateColumns: "72px 900px 72px",
+      getPropertyValue: () => "72" }),
     console, URL: { createObjectURL: () => "", revokeObjectURL: () => "" },
     MediaRecorder: function () {},
     Blob: globalThis.Blob, Response: globalThis.Response,

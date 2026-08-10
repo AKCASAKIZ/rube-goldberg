@@ -21,7 +21,8 @@ const kaynak = fs.readFileSync(path.join(kok, "index.html"), "utf8")
 const yutucu = new Proxy(function () {}, {
   // left/top SAYI donmeli: fareNok bunlari cikariyor, proxy donseydi
   // koordinat NaN olurdu ve dokunmatik testleri sessizce anlamsizlasirdi.
-  get: (t, k) => (k === "width" ? 1000 : k === "height" ? 640
+  get: (t, k) => (k === "width" || k === "clientWidth" ? 1000
+    : k === "height" || k === "clientHeight" ? 640
     : k === "left" || k === "top" ? 0 : k === "length" ? 0 : yutucu),
   set: () => true,
   apply: () => yutucu,
@@ -61,6 +62,10 @@ const kutu = {
   setTimeout: (f, ms) => setTimeout(f, ms),
   clearTimeout: () => {},
   innerWidth: 1400, innerHeight: 900,
+  // tahtaPayiTazele serit enini ve izgara sutunlarini buradan okuyor.
+  getComputedStyle: () => ({ position: "absolute",
+    gridTemplateColumns: "72px 900px 72px",
+    getPropertyValue: () => "72" }),
   addEventListener: () => {},          // window.addEventListener (hashchange)
   console,
   URL: { createObjectURL: () => "", revokeObjectURL: () => {} },
@@ -250,11 +255,19 @@ const bak = (ad, kosul, ek = "") => {
   g.birak({ clientX: 0, clientY: 0 });
   bak("bırakınca seçim kutusu kapanıyor", g.kutuSecim === null);
 
-  // Shift ile aynı hareket görüşü kaydırıyor, kutu açmıyor
+  // Shift ile ayni hareket gorusu kaydiriyor, kutu acmiyor.
+  // !! Yalnizca YAKINLASTIRILMISKEN: %100'de gorusKis her seyi 0'a kistigi
+  //    icin kaydirma zaten hicbir sey yapmiyordu; artik hic baslamiyor ve
+  //    oyuncuya "once yakinlastir" deniyor. Bu iki satir o kurali olcuyor.
   g.secimYap([]);
+  g.GORUS.olcek = 1;
+  g.tasimaBasla({ x: 150, y: 400 }, { shiftKey: true });
+  bak("%100'de kaydırma başlamıyor", !g.kaydirma);
+  g.GORUS.olcek = 2;
   g.tasimaBasla({ x: 150, y: 400 }, { shiftKey: true });
   bak("Shift görüşü kaydırıyor", !g.kutuSecim && !!g.kaydirma);
   g.kaydirma = null;
+  g.GORUS.olcek = 1; g.GORUS.x = 0; g.GORUS.y = 0;
 
   // Toplu taşıma: iki domino birlikte kayıyor, aralarındaki mesafe korunuyor
   const p1 = g.parcalar[0], p2 = g.parcalar[1];
