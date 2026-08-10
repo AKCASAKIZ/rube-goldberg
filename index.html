@@ -46,7 +46,20 @@
      SAYFA kayar, bu gorunur ve tanidik bir davranis.
      Yeni panel eklerken: hicbir sey sessizce kaybolmamali. */
   .kutu{position:absolute;top:0;display:flex;flex-direction:column;gap:8px;
-        width:var(--serit);z-index:20;transition:width .16s ease}
+        width:var(--serit);z-index:20;transition:width .16s ease;
+        /* Serit KENDI ICINDE kayiyor, SAYFA kaymiyor. Sebebi olculdu
+           (10-08-2026): sag serit 858 px, ekran 665 - alttaki calgi
+           dugmelerine ulasmak icin sayfayi kaydirmak gerekiyordu ve TAHTA DA
+           ekrandan cikiyordu. Simdi tahta sabit, yalnizca menu kayiyor.
+           !! Kaydirma cubugu GIZLENMIYOR. Bir sure `overflow:auto` + gizli
+              cubuk vardi ve sigmayan dugmeler hem kesiliyor hem kesildigine
+              dair iz birakmiyordu - dugmeler silinmis gibi gorunuyordu.
+              --seritUst: seridin ekranin tepesinden uzakligi, betik yaziyor. */
+        max-height:calc(100dvh - var(--seritUst, 60px) - 12px);
+        overflow-y:auto;overscroll-behavior:contain}
+  .kutu::-webkit-scrollbar{width:8px}
+  .kutu::-webkit-scrollbar-thumb{background:#39415a;border-radius:4px}
+  .kutu::-webkit-scrollbar-track{background:transparent}
   .sol .kutu{left:0}
   .sag .kutu{right:0}
   .kutu:hover,.kutu:focus-within{width:var(--acik)}
@@ -3087,7 +3100,13 @@ function tahtaPayiTazele() {
     if (getComputedStyle(k).position !== "static") continue;   // serit: ustune biniyor
     alt += k.getBoundingClientRect().height + 12;
   }
-  const pay = Math.max(0, Math.round(ust + alt + 10));
+  // .app'in ALT DOLGUSU da paya girmeli: girmeyince tahta tam o kadar tasip
+  // sayfayi kaydiriyordu (olculdu: 52 px). Sabit sayi yazmak yerine okunuyor,
+  // cunku dolgu ekran yuksekligine gore kademe kademe degisiyor.
+  const uyg = document.querySelector(".app");
+  const altDolgu = uyg
+    ? parseFloat(getComputedStyle(uyg).paddingBottom) || 0 : 0;
+  const pay = Math.max(0, Math.round(ust + alt + altDolgu + 8));
   const kok = document.documentElement;
   kok.style.setProperty("--pay", pay + "px");
 
@@ -3103,6 +3122,10 @@ function tahtaPayiTazele() {
   const dikey = (innerHeight - pay) * 1000 / 640;
   kok.style.setProperty("--tahtaW",
     Math.max(240, Math.round(Math.min(yatay, dikey))) + "px");
+  // Serit ekranin tepesinden ne kadar asagida basliyorsa, kendi azami
+  // yuksekligi o kadar eksiliyor - boylece hicbir serit ekrani asmiyor ve
+  // sayfa kaydirmasi hic dogmuyor.
+  kok.style.setProperty("--seritUst", Math.round(ust) + "px");
 }
 
 addEventListener("resize", tahtaPayiTazele);
