@@ -34,7 +34,10 @@ function motorKur() {
   const kutu = {
     document: { getElementById: () => yut, createElement: () => yut,
       createTextNode: () => yut, querySelector: () => yut,
-      addEventListener: () => {}, documentElement: {}, hidden: false, title: "" },
+      querySelectorAll: () => [],                 // tahtaPayiTazele icin
+      addEventListener: () => {},
+      documentElement: { style: { setProperty: () => {} } },
+      hidden: false, title: "" },
     navigator: { language: "en" },
     localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
     performance: { now: () => 0 },

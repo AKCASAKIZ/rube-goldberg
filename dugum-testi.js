@@ -33,8 +33,12 @@ const belge = {
   createElement: () => yutucu,
   createTextNode: () => yutucu,
   querySelector: () => yutucu,
+  // tahtaPayiTazele bunlari kullaniyor: bos liste = "altta panel yok", yani
+  // pay yalnizca tahtanin ustundeki mesafe olur. Sahte DOM'un gercek DOM'u
+  // modellememesi testi sessizce cokertmisti.
+  querySelectorAll: () => [],
   addEventListener: () => {},
-  documentElement: {},
+  documentElement: { style: { setProperty: () => {} } },
   hidden: false,
   title: "",
 };

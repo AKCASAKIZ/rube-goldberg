@@ -22,13 +22,20 @@
      birakmak icin. Fare uzerine gelince acilip tahtanin USTUNE biniyorlar:
      boylece menu genislerken tuval yeniden olceklenmiyor, oyun ziplamiyor.
      Dar ekranda serit mantigi kapaniyor, paneller tahtanin altina iniyor. */
-  .duzen{display:grid;gap:12px;align-items:start;
-         grid-template-columns:var(--serit) minmax(0,1fr) var(--serit)}
+  /* Seritler artik AYRI SUTUN degil, tahtanin USTUNE binen katman (karar
+     10-08-2026). Eskiden izgara `serit 1fr serit` idi ve yan sutunlar her
+     ekranda 144 px yiyordu; ustelik tahta orta sutunda ORTALANDIGI icin tahta
+     daraldikca menuyle tahta arasi aciliyor, menuler kayiyormus gibi
+     gorunuyordu. Simdi tahta tum genisligi aliyor, seritler onun kenarina
+     `--tahtaW` uzerinden yapisiyor (tahtaPayiTazele olcup yaziyor). */
+  .duzen{position:relative}
   /* Serit genisligi renk izgarasina gore: 2 daire (24) + bosluk (6) = 54,
      bar dolgusu 2x8 -> 70. 72 verildi ki kirpilmasin. Daraltirsan renkler
      seride sigmaz ve sessizce kesilir. */
   :root{--serit:72px;--acik:212px}
-  .sutun{position:relative;min-width:0;height:0}
+  .sutun{position:absolute;top:0;width:var(--serit);height:0;z-index:20}
+  .sol{left:calc(50% - var(--tahtaW, 900px) / 2)}
+  .sag{right:calc(50% - var(--tahtaW, 900px) / 2)}
   /* Serit KIRPILMAZ. Bir sure `max-height` + `overflow:auto` vardi ve
      kaydirma cubugu da gizliydi: sigmayan dugmeler (Tasi/Cogalt/Sil) hem
      kesiliyor hem de kesildigine dair hicbir iz birakmiyordu - dugmeler
@@ -108,8 +115,8 @@
     .sub{display:none}
   }
 
-  @media (max-width:1120px){
-    .duzen{grid-template-columns:minmax(0,1fr)}
+  @media (max-width:1120px) and (orientation:portrait){
+    .duzen{position:static}
     .sutun{height:auto}
     .kutu{position:static;width:auto;flex-direction:row;flex-wrap:wrap}
     .kutu>div{flex:1 1 320px}
@@ -136,20 +143,12 @@
   @media (orientation:landscape) and (max-height:560px){
     .app{padding:6px 6px 8px}
     h1,.sub{display:none}
-    .duzen{gap:6px;grid-template-columns:var(--serit) minmax(0,1fr) var(--serit)}
-    .sutun{height:0}
-    .kutu{position:absolute;width:var(--serit);flex-direction:column;flex-wrap:nowrap}
-    .kutu>div{flex:none}
-    .sutun .bar{flex-direction:column;align-items:stretch}
-    .sutun .bar button{width:100%}
-    .sol{order:0}
-    /* Dokunmatikte seritler normalde ACIK duruyor (hover yok). Yatay telefonda
-       acik serit tahtanin ucte birini kapatiyor: burada KAPALI baslatilip
-       dokununca aciliyor (:focus-within). Acilan serit tahtanin ustune bindigi
-       icin tahta yine kuculmuyor. */
+    /* Dokunmatikte seritler normalde ACIK duruyor (hover yok, acmanin baska
+       yolu yok). Yatay telefonda acik serit tahtanin ucte birini kapatiyor:
+       burada KAPALI baslatilip dokununca aciliyor. Serit zaten tahtanin
+       USTUNE bindigi icin acilmasi tahtayi kucultmuyor. */
     .kutu{width:var(--serit)}
     .kutu:focus-within{width:var(--acik)}
-    .wrap{max-width:calc((100dvh - 12px) * 1000 / 640)}
   }
 
   /* ---- TELEFON DIKEY: cevir perdesi ---- *
@@ -255,7 +254,13 @@
   /* Tahta genisledikce yukselir; ekrandan tasmasin diye eni, kalan YUKSEKLIGE
      gore de sinirlaniyor (1000/640 en-boy orani sabit). */
   .wrap{position:relative;border:1px solid var(--line);border-radius:14px;overflow:hidden;
-        background:#0e1015;max-width:calc((100vh - 190px) * 1000 / 640);margin:0 auto}
+        background:#0e1015;margin:0 auto;
+        /* --pay: tahtanin USTUNDE ve ALTINDA yer kaplayan her seyin gercek
+           yuksekligi; tahtaPayiTazele() olcup yaziyor. Buradaki 190px yalnizca
+           betik cizmeden onceki ilk boyama icin yedek deger - eskiden SABIT
+           190'di ve masaustu basligina gore tahmin edilmisti, yani tahta her
+           yerde oldugundan kucuk kaliyordu. */
+        max-width:calc((100dvh - var(--pay, 190px)) * 1000 / 640)}
   /* Alan rengi secicisi: renk daireleri */
   /* Sabit 2 sutun: serit acilirken yeniden dizilseydi renkler imlecin
      altindan kayardi. Ayrica serit halinde 5 satir yer kaplamiyor. */
@@ -3028,6 +3033,46 @@ function ekranOlcegi() {
   const g = cv.getBoundingClientRect().width;
   return g ? g / W : 1;
 }
+
+/* ---------- tahta payi: bos alani gercekten kullan ---------- *
+ *
+ *  Tahtanin eni yuksekligine bagli (1000/640 orani sabit), yuksekligi de
+ *  ekrandan artan yere. O "artan yer" eskiden CSS'te SABIT 190 px yaziliydi
+ *  ve masaustu basligina gore tahmin edilmisti - yani tahta her ekranda
+ *  oldugundan kucuk kaliyordu, telefon yatayda ise felaketti (olculdu:
+ *  844x390'da tahta 313x200, top 4,1 px).
+ *
+ *  Burada tahmin yerine OLCUM var: tahtanin ustunde kalan mesafe ve altinda
+ *  yer kaplayan panellerin gercek yuksekligi toplanip --pay'e yaziliyor.
+ *  Boylece tahta her ekranda kalan yerin tamamina yayiliyor.
+ *
+ *  !! Serit modundaki paneller SAYILMIYOR (position:absolute): onlar tahtanin
+ *     USTUNE biniyor, altinda yer kaplamiyorlar. Sayilsalardi tahta boslukta
+ *     kucuk kalirdi. Yigin modunda (dar ekran) ise paneller gercekten altta,
+ *     onlari saymazsak menuler ekranin disina taser.
+ *  !! Tahtanin USTU --pay'den etkilenmiyor (ustundeki icerik sabit), o yuzden
+ *     olcum kendi etkisine dusmuyor; tek gecis yetiyor. */
+function tahtaPayiTazele() {
+  const sar = document.querySelector(".wrap");
+  if (!sar) return;
+  const ust = sar.getBoundingClientRect().top;
+  let alt = 0;
+  for (const k of document.querySelectorAll(".sutun .kutu")) {
+    if (getComputedStyle(k).position !== "static") continue;   // serit: ustune biniyor
+    alt += k.getBoundingClientRect().height + 12;
+  }
+  const pay = Math.max(0, Math.round(ust + alt + 10));
+  const kok = document.documentElement;
+  kok.style.setProperty("--pay", pay + "px");
+  // Seritler tahtanin kenarina --tahtaW uzerinden yapisiyor (CSS: .sol/.sag).
+  // Pay yazildiktan SONRA olculuyor: pay tahtanin enini belirliyor, ters sirada
+  // bir onceki cizimin eni yazilir ve seritler bir kare geride kalir.
+  kok.style.setProperty("--tahtaW",
+    Math.round(sar.getBoundingClientRect().width) + "px");
+}
+
+addEventListener("resize", tahtaPayiTazele);
+addEventListener("orientationchange", tahtaPayiTazele);
 const yakalamaPayi = r =>
   (KABA_IMLEC ? r * 2.2 : r)
   / (Math.min(1, GORUS.olcek) * Math.min(1, ekranOlcegi()));
@@ -4132,6 +4177,9 @@ try {
 } catch (e) {}
 document.querySelector(".wrap").style.background = Z().dolgu;
 arayuzuTazele();
+// Paneller cizildikten SONRA olculmeli: yigin duzeninde tahtanin altinda
+// duran panellerin yuksekligi paya giriyor, bos halde olcersek tahta tasar.
+tahtaPayiTazele();
 bolumKur(0);
 // Link kod cozme async (sikistirma akisi): once 0. bolum kuruluyor, hash'te
 // makine varsa hemen uzerine biniyor. Sirasi onemli - bolumKur misafirligi
