@@ -593,6 +593,27 @@ const bak = (ad, kosul, ek = "") => {
   bak("parmaklar kalkınca çimdik bitiyor", g.dokunmalar.size === 0);
   g.GORUS.olcek = 1;
 
+  /* Iki parmakla KAYDIRMA. Uzun sure hic yoktu: kaydirma yalnizca orta fare
+     tusu veya Shift ile aciliyordu (eylemBasla'daki `kaydirTusu`), ikisi de
+     telefonda yok - yani oyuncu yakinlastirip gorusu oynatamiyordu.
+     Olculen sey iki ayri sey: kayiyor mu, ve dogru MIKTARDA mi kayiyor
+     (kayma tuval pikselinden dunyaya cevrilmezse yakinken kat kat fazla
+     kayar). Olcek 2'de 100 px'lik parmak hareketi 50 birim gorus demek. */
+  g.GORUS.olcek = 2; g.GORUS.x = 200; g.GORUS.y = 100;
+  g.dokunBasla(dok(1, 400, 300));
+  g.dokunBasla(dok(2, 500, 300));
+  const once = { x: g.GORUS.x, y: g.GORUS.y };
+  g.dokunOynat(dok(1, 300, 300));      // iki parmak da 100 px sola
+  g.dokunOynat(dok(2, 400, 300));
+  const kaydi = g.GORUS.x - once.x;
+  bak("iki parmak görüşü kaydırıyor", Math.abs(kaydi) > 1,
+      "kayma=" + kaydi.toFixed(1));
+  bak("kayma ölçeğe bölünüyor", Math.abs(kaydi - 50) < 6,
+      kaydi.toFixed(1) + " ≈ 50 (100 px / ölçek 2)");
+  g.dokunBitir(dok(1, 300, 300));
+  g.dokunBitir(dok(2, 400, 300));
+  g.GORUS.olcek = 1; g.GORUS.x = 0; g.GORUS.y = 0;
+
   /* ---- 6. bolum: secerek kopyalama ---- *
      ⧉ aracinda bos alanda surukleme SECMEZ, KOPYALAR. Olculen sey: kutunun
      icindekilerin tamaminin geldigi, aralarindaki mesafenin bozulmadigi ve

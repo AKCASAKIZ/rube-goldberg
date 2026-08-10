@@ -2836,6 +2836,16 @@ function dokunOynat(e) {
     if (cimdik) {
       const yeni = cimdikDurum();
       if (cimdik.uzaklik > 1) yakinlastir(yeni.uzaklik / cimdik.uzaklik, yeni.orta);
+      // Iki parmagin ORTASI kaydikca gorus de kaysin. Bu satirlar olmadan
+      // dokunmatikte kaydirma HIC yoktu: kaydirma yalnizca orta fare tusu
+      // veya Shift ile aciliyor (eylemBasla'daki `kaydirTusu`), ikisi de
+      // telefonda yok. Yani oyuncu yakinlastirabiliyor ama sonra gorusu
+      // oynatamiyordu - yakinlastirmayi ise yaramaz kilan sey buydu.
+      // Kayma tuval pikselinden dunyaya ceviriliyor (/olcek), yoksa
+      // yakinken parmak kadar degil kat kat fazla kayar.
+      GORUS.x -= (yeni.orta.x - cimdik.orta.x) / GORUS.olcek;
+      GORUS.y -= (yeni.orta.y - cimdik.orta.y) / GORUS.olcek;
+      gorusKis();
       cimdik = yeni;
     }
     return;

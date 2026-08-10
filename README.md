@@ -761,6 +761,13 @@ ulaşılabilir — en darı "2 · Domino" (6 parça hedefine 6 parçayla) ve
   !! Düzeltme SONRASI rakamlar (844×390'da ~590×378, top 7,7 px) **hesapla**
   bulundu, tarayıcıda ölçülemedi — ölçüm sırasında CDP zaman aşımına düştü.
   Gerçek cihazda teyit edilmeli.
+- **Dokunmatikte kaydırma iki parmakla.** Uzun süre HİÇ yoktu: kaydırma
+  yalnızca orta fare tuşu veya Shift ile açılıyordu (`eylemBasla` içindeki
+  `kaydirTusu`), ikisi de telefonda yok — yani oyuncu çimdikle yakınlaştırıp
+  görüşü oynatamıyordu, bu da yakınlaştırmayı işe yaramaz kılıyordu.
+  Artık iki parmağın ortasının kayması görüşe uygulanıyor. Kayma tuval
+  pikselinden dünyaya çevriliyor (`/GORUS.olcek`); çevrilmezse yakınken
+  parmak kadar değil kat kat fazla kayar — test bunu ayrıca ölçüyor.
 - Uzun basma süresi (500 ms) ve kayma eşiği (10 birim) `DOKUN` sabitinde;
   gerçek cihazda oynanarak ayarlanmadı.
 - Kontrol şeridi Örnekler bölümüyle birlikte uzadı: 1500×950'de alt ucu
