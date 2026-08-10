@@ -119,6 +119,53 @@
     .sol{order:2}
   }
 
+  /* ---- TELEFON YATAY ---- *
+     Olculdu (10-08-2026, cihaz emulasyonu): telefonda tahta iPhone 13 dikeyde
+     358x230, YATAYDA 313x200 idi - yani telefonu cevirmek isi KOTULESTIRIYORDU.
+     Iki sebebi vardi:
+       1. .wrap'in `100vh - 190px` payi masaustu basligi+menuleri icin ayrilmis;
+          yatayda ekran yuksekligi 390'a dusunce geriye 200 kaliyordu.
+       2. max-width:1120px kurali menuleri tahtanin ALTINA yiginca kalan dikey
+          yer daha da azaliyordu.
+     Burada ikisi de geri aliniyor: baslik gizleniyor, pay 190 -> 12'ye iniyor
+     ve menuler tekrar serit olup tahtanin USTUNE biniyor (position:absolute),
+     boylece acilip kapanmalari tahtayi kucultmuyor.
+     Olcum sonrasi: 844x390'da tahta 313x200 -> ~600x384.
+     !! dvh kullaniliyor: iOS Safari'de adres cubugu kayarken vh degisiyor ve
+        tahta kosu ortasinda yeniden olcekleniyordu. */
+  @media (orientation:landscape) and (max-height:560px){
+    .app{padding:6px 6px 8px}
+    h1,.sub{display:none}
+    .duzen{gap:6px;grid-template-columns:var(--serit) minmax(0,1fr) var(--serit)}
+    .sutun{height:0}
+    .kutu{position:absolute;width:var(--serit);flex-direction:column;flex-wrap:nowrap}
+    .kutu>div{flex:none}
+    .sutun .bar{flex-direction:column;align-items:stretch}
+    .sutun .bar button{width:100%}
+    .sol{order:0}
+    /* Dokunmatikte seritler normalde ACIK duruyor (hover yok). Yatay telefonda
+       acik serit tahtanin ucte birini kapatiyor: burada KAPALI baslatilip
+       dokununca aciliyor (:focus-within). Acilan serit tahtanin ustune bindigi
+       icin tahta yine kuculmuyor. */
+    .kutu{width:var(--serit)}
+    .kutu:focus-within{width:var(--acik)}
+    .wrap{max-width:calc((100dvh - 12px) * 1000 / 640)}
+  }
+
+  /* ---- TELEFON DIKEY: cevir perdesi ---- *
+     Hedef yatayda oynatmak (kullanici karari, 10-08-2026). Dikeyde tahta
+     1000x640'i 358 px'e sigdiriyor ve top 4,7 px'e dusuyor - oynanmiyor.
+     Bolum tasarimini dikeye uyarlamak yerine dikeyde perde gosteriliyor. */
+  #cevir{display:none}
+  @media (orientation:portrait) and (max-width:560px){
+    #cevir{display:flex;position:fixed;inset:0;z-index:200;
+           flex-direction:column;align-items:center;justify-content:center;gap:14px;
+           background:var(--bg);text-align:center;padding:24px}
+    #cevir .ikon{font-size:52px;animation:cevrilsin 2.2s ease-in-out infinite}
+    #cevir p{margin:0;color:var(--dim);max-width:280px}
+    @keyframes cevrilsin{0%,55%{transform:rotate(0)}75%,100%{transform:rotate(90deg)}}
+  }
+
   /* Menuler: yuzen cam paneller */
   .bar{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-bottom:10px;
        background:linear-gradient(180deg,#1c2029cc,#161a22cc);border:1px solid var(--line);
@@ -254,6 +301,13 @@
 </style>
 </head>
 <body>
+<!-- Telefon dikeyken tahta 358 px'e sikisiyor ve top 4,7 px'e dusuyor
+     (olculdu). Oyun yatayda oynanir; perde yalnizca dar+dikey ekranda cikar,
+     CSS'te @media (orientation:portrait) and (max-width:560px). -->
+<div id="cevir">
+  <div class="ikon">📱</div>
+  <p id="cevirMetin">Telefonu yan çevir — bu oyun yatay oynanıyor.</p>
+</div>
 <div class="app">
   <h1>Rube Goldberg Atölyesi</h1>
   <p class="sub">Basit bir işi gereksiz yere karmaşık yap: topu zile ulaştır.</p>
@@ -880,6 +934,7 @@ const SOZLUK = {
       kayit: "🎬 Record (vertical)", kayitDurdur: "⏹ Stop & save", sil: "🗑 Delete",
       paylas: "🔗 Share link",
       bsOrnek: "Examples",
+      cevir: "Turn your phone sideways — this game is played in landscape.",
       ornekIpuc: ad => `${ad} — press Run to hear it. Nothing of yours was overwritten.`,
       paylasBos: "Build something first — an empty board has nothing to share.",
       paylasKopya: n => `Link copied — ${n} ${n === 1 ? "piece" : "pieces"}. Anyone who opens it gets your machine.`,
@@ -986,6 +1041,7 @@ const SOZLUK = {
       kayit: "🎬 Aufnahme (hochkant)", kayitDurdur: "⏹ Stoppen & sichern", sil: "🗑 Löschen",
       paylas: "🔗 Link teilen",
       bsOrnek: "Beispiele",
+      cevir: "Dreh dein Handy quer — dieses Spiel wird im Querformat gespielt.",
       ornekIpuc: ad => `${ad} — drück auf Start, um es zu hören. Deine eigene Maschine bleibt erhalten.`,
       paylasBos: "Bau erst etwas — ein leeres Brett lässt sich nicht teilen.",
       paylasKopya: n => `Link kopiert — ${n} ${n === 1 ? "Teil" : "Teile"}. Wer ihn öffnet, sieht deine Maschine.`,
@@ -1091,6 +1147,7 @@ const SOZLUK = {
       kayit: "🎬 Enregistrer (vertical)", kayitDurdur: "⏹ Arrêter et garder", sil: "🗑 Supprimer",
       paylas: "🔗 Partager le lien",
       bsOrnek: "Exemples",
+      cevir: "Tourne ton téléphone — ce jeu se joue en mode paysage.",
       ornekIpuc: ad => `${ad} — appuie sur Lancer pour l'entendre. Rien de ce que tu as construit n'a été écrasé.`,
       paylasBos: "Construis d'abord quelque chose — un plateau vide n'a rien à partager.",
       paylasKopya: n => `Lien copié — ${n} ${n === 1 ? "pièce" : "pièces"}. Qui l'ouvre voit ta machine.`,
@@ -1229,6 +1286,7 @@ const YEDEK_UI = {
   kayit: "🎬 Kayıt (dikey)", kayitDurdur: "⏹ Bitir ve kaydet", sil: "🗑 Sil",
   paylas: "🔗 Link paylaş",
   bsOrnek: "Örnekler",
+      cevir: "Telefonu yan çevir — bu oyun yatay oynanıyor.",
   ornekIpuc: ad => `${ad} — dinlemek için Çalıştır'a bas. Senin kurduğun hiçbir şey silinmedi.`,
   paylasBos: "Önce bir şey kur — boş tahtanın paylaşacak bir şeyi yok.",
   paylasKopya: n => `Link kopyalandı — ${n} parça. Açan herkes senin makineni görür.`,
@@ -1326,6 +1384,7 @@ function arayuzuTazele() {
   document.title = T("baslik");
   document.querySelector("h1").textContent = T("baslik");
   document.querySelector(".sub").textContent = T("altbaslik");
+  document.getElementById("cevirMetin").textContent = T("cevir");
   dugmeYaz(document.getElementById("basla"), T("calistir"));
   dugmeYaz(document.getElementById("sifirla"), T("sifirla"));
   temizleTazele();

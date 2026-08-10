@@ -749,9 +749,18 @@ ulaşılabilir — en darı "2 · Domino" (6 parça hedefine 6 parçayla) ve
   ve enstrüman alıcının kendi ayarlarında kalır.
 - Misafir şeridi açıkken sayfa ~48 px uzuyor; çok kısa ekranlarda dikey
   kaydırmayı erken tetikleyebilir.
-- Telefonda tahta ~354 px'e sığıyor: oynanır ama dar. Tuval ölçüsü (1000×640)
-  hâlâ sabit; gerçek mobil deneyim için bölüm tasarımının dikeye uyarlanması
-  ayrı bir iş.
+- **Mobil: oyun YATAY oynanır** (karar 10-08-2026). Dikeyde tahta 1000×640'ı
+  358 px'e sığdırıyor ve top 4,7 px'e düşüyor — oynanmıyor. Bölüm tasarımını
+  dikeye uyarlamak yerine dikeyde "telefonu çevir" perdesi çıkıyor (`#cevir`,
+  dört dilde).
+  Ölçüldü (cihaz emülasyonu, düzeltme ÖNCESİ): iPhone 13 dikey 358×230 · iPhone
+  13 **yatay 313×200** · 16 Pro Max yatay 391×250 · SE yatay 289×185. Yani
+  telefonu çevirmek işi kötüleştiriyordu; sebebi `.wrap`'in `100vh - 190px`
+  payı (masaüstü başlık+menü payı) ve menülerin 1120 px altında tahtanın
+  altına yığılmasıydı. İkisi de telefon-yatay medya kuralında geri alınıyor.
+  !! Düzeltme SONRASI rakamlar (844×390'da ~590×378, top 7,7 px) **hesapla**
+  bulundu, tarayıcıda ölçülemedi — ölçüm sırasında CDP zaman aşımına düştü.
+  Gerçek cihazda teyit edilmeli.
 - Uzun basma süresi (500 ms) ve kayma eşiği (10 birim) `DOKUN` sabitinde;
   gerçek cihazda oynanarak ayarlanmadı.
 - Kontrol şeridi Örnekler bölümüyle birlikte uzadı: 1500×950'de alt ucu
